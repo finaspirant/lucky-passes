@@ -12,6 +12,7 @@ Everything in this repo was built between Oct 26 and Nov 4, 2026.
 Creates self-generated bug-fix tasks for the experiment.
 
 - Oct 28, 2026: design approved and written to DESIGN.md; preregistration clarifications appended; .venv with pytest created.
+- Oct 28, 2026: sandboxed test runner (run_visible, run_hidden, flag_suspicious); first 3 bases (duration, ring_buffer, intervals) with spec docstrings and case pools.
 
 ## Agent loop
 
