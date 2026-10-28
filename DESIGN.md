@@ -70,3 +70,7 @@ These are enforced when the agent loop is built.
 - Mutation sites may be anywhere in the module; helper sites are tried first.
 - Ring buffer golden sequences include `clear`.
 - When scaling to more bases, mutations at input-validation sites should be at most about one third of the pool.
+
+**Oct 28, 2026** (reasoning effort)
+
+- The agent loop will use Chat Completions with top-level `reasoning_effort`, matching calibration. The `reasoning: {"effort": ...}` object is rejected on Chat Completions; see `calibration/effort_discovery.jsonl`.

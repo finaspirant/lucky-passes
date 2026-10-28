@@ -1,6 +1,7 @@
-"""Summarize results/calibration/probe.jsonl. Usage: python -m calibration.summarize"""
+"""Summarize a calibration probe log. Usage: python -m calibration.summarize [log_path]"""
 
 import json
+import sys
 from collections import defaultdict
 from pathlib import Path
 
@@ -8,8 +9,8 @@ LOG_PATH = Path("results/calibration/probe.jsonl")
 TASK_DIR = Path("tasks/generated")
 
 
-def main():
-    records = [json.loads(line) for line in LOG_PATH.read_text().splitlines()]
+def main(log_path):
+    records = [json.loads(line) for line in Path(log_path).read_text().splitlines()]
     by_task = defaultdict(list)
     for r in records:
         by_task[r["task_id"]].append(r)
@@ -41,10 +42,13 @@ def main():
     print(f"tasks: {buckets}")
     print(f"tokens: input {total('input_tokens')}, output {total('output_tokens')}, "
           f"reasoning {total('reasoning_tokens')} (reported on {sum(r.get('reasoning_tokens') is not None for r in scored)} attempts)")
+    n = len(scored) or 1
+    print(f"avg per attempt: input {total('input_tokens') / n:.0f}, output {total('output_tokens') / n:.0f}, "
+          f"reasoning {total('reasoning_tokens') / n:.0f}")
     print(f"suspicious attempts: {[(r['task_id'], r['attempt'], r['suspicious']) for r in scored if r['suspicious']]}")
     print(f"unchanged source: {sum(not r['changed_source'] for r in scored)}")
     print(f"usage keys seen: {sorted({k for r in scored for k in r['usage_keys']})}")
 
 
 if __name__ == "__main__":
-    main()
+    main(sys.argv[1] if len(sys.argv) > 1 else LOG_PATH)

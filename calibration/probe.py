@@ -1,12 +1,14 @@
 """Calibration probe: single-shot fix attempts with muse-spark-1.3 on the generated tasks.
 
-Calibration only, not experiment data. Usage: python -m calibration.probe [attempts_per_task]
+Calibration only, not experiment data.
+Usage: python -m calibration.probe [--attempts 3] [--effort minimal|low|medium|high|xhigh|max]
+Without --effort the model default is used and the log is probe.jsonl; with it, probe_effort_<level>.jsonl.
 """
 
+import argparse
 import json
 import os
 import re
-import sys
 import time
 import urllib.error
 import urllib.request
@@ -20,7 +22,7 @@ BASE_URL = "https://api.meta.ai/v1"
 MODEL = "muse-spark-1.3"
 TASK_DIR = Path("tasks/generated")
 SOLUTION_DIR = Path("tasks/_solutions")
-LOG_PATH = Path("results/calibration/probe.jsonl")
+LOG_DIR = Path("results/calibration")
 
 PROMPT = """The Python module `{module}.py` below has a bug. Its docstring is the specification.
 
@@ -45,11 +47,17 @@ def load_env(path=".env"):
             os.environ.setdefault(key.strip(), value.strip().strip("\"'"))
 
 
-def chat(prompt):
-    """One chat call. Returns (reply text, usage dict, latency seconds)."""
+def chat(prompt, effort=None):
+    """One chat call. Returns (reply text, usage dict, latency seconds).
+
+    effort is sent as top-level reasoning_effort; None leaves the model default.
+    """
+    payload = {"model": MODEL, "messages": [{"role": "user", "content": prompt}]}
+    if effort:
+        payload["reasoning_effort"] = effort
     request = urllib.request.Request(
         f"{BASE_URL}/chat/completions",
-        data=json.dumps({"model": MODEL, "messages": [{"role": "user", "content": prompt}]}).encode(),
+        data=json.dumps(payload).encode(),
         headers={"Authorization": f"Bearer {os.environ['MODEL_API_KEY']}", "Content-Type": "application/json"},
     )
     start = time.perf_counter()
@@ -82,13 +90,13 @@ def fixed_only_exposed(task_dir, task, hidden_failing):
     return sorted(alone["failing"]) == sorted(hidden_failing)
 
 
-def attempt(task_dir, task, number):
+def attempt(task_dir, task, number, effort=None):
     buggy = (task_dir / f"{task['module']}.py").read_text()
     visible_output = run_visible(task_dir, buggy)["output"]
     record = {"timestamp": datetime.now(timezone.utc).isoformat(), "task_id": task["task_id"],
-              "attempt": number, "model": MODEL}
+              "attempt": number, "model": MODEL, "reasoning_effort": effort}
     try:
-        reply, usage, latency = chat(PROMPT.format(module=task["module"], source=buggy, output=visible_output))
+        reply, usage, latency = chat(PROMPT.format(module=task["module"], source=buggy, output=visible_output), effort)
     except (urllib.error.URLError, TimeoutError) as err:
         return {**record, "error": f"api: {getattr(err, 'code', '')} {err}"[:300]}
     fixed = extract_code(reply)
@@ -105,14 +113,15 @@ def attempt(task_dir, task, number):
     return record
 
 
-def main(attempts):
+def main(attempts, effort):
     load_env()
-    LOG_PATH.parent.mkdir(parents=True, exist_ok=True)
+    LOG_DIR.mkdir(parents=True, exist_ok=True)
+    log_path = LOG_DIR / (f"probe_effort_{effort}.jsonl" if effort else "probe.jsonl")
     for task_dir in sorted(p for p in TASK_DIR.iterdir() if p.is_dir()):
         task = json.loads((task_dir / "task.json").read_text())
         for number in range(1, attempts + 1):
-            record = attempt(task_dir, task, number)
-            with LOG_PATH.open("a") as log:
+            record = attempt(task_dir, task, number, effort)
+            with log_path.open("a") as log:
                 log.write(json.dumps(record) + "\n")
             print(f"{record['task_id']} #{number}: hidden_pass={record.get('hidden_pass')} "
                   f"tokens in/out/reason={record.get('input_tokens')}/{record.get('output_tokens')}/"
@@ -120,4 +129,8 @@ def main(attempts):
 
 
 if __name__ == "__main__":
-    main(int(sys.argv[1]) if len(sys.argv) > 1 else 3)
+    parser = argparse.ArgumentParser()
+    parser.add_argument("--attempts", type=int, default=3)
+    parser.add_argument("--effort", choices=["minimal", "low", "medium", "high", "xhigh", "max"])
+    args = parser.parse_args()
+    main(args.attempts, args.effort)
