@@ -11,6 +11,8 @@ Everything in this repo was built between Oct 26 and Nov 4, 2026.
 
 Creates self-generated bug-fix tasks for the experiment.
 
+- Oct 28, 2026: design approved and written to DESIGN.md; preregistration clarifications appended; .venv with pytest created.
+
 ## Agent loop
 
 Runs the coding agent for repeated attempts on each task.

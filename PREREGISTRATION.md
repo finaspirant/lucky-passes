@@ -45,3 +45,12 @@ The process selector beats both random and the final-patch judge on hidden-test 
 ## Preregistration integrity
 
 This file is committed before results and must not be edited after results come in, except by appending a clearly dated "Deviations" section.
+
+## Clarifications (before any results)
+
+**Date:** Oct 28, 2026
+
+- The task pool is about 30 tasks instead of about 20, to leave room for the mixed subset.
+- Primary analysis is on all tasks.
+- Secondary analysis is on tasks where 1 to 4 of 5 attempts pass hidden tests.
+- Bootstrap resampling is clustered by base program. Intervals are expected to be wide.
