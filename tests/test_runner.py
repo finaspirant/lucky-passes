@@ -24,7 +24,13 @@ def make_task(tmp_path):
 
 def test_correct_source_passes(tmp_path):
     result = run_hidden(make_task(tmp_path), "def double(x):\n    return x * 2\n")
-    assert result == {"passed": 3, "failed": 0, "failing": [], "error": None}
+    assert result == {"passed": 3, "failed": 0, "failing": [], "exceptions": [], "error": None}
+
+
+def test_reports_uncaught_exception_types(tmp_path):
+    result = run_hidden(make_task(tmp_path), "def double(x):\n    return [][x]\n")
+    assert result["exceptions"] == ["IndexError"]
+    assert run_hidden(make_task(tmp_path), "def double(x):\n    return x + 2\n")["exceptions"] == []
 
 
 def test_visible_includes_truncated_output(tmp_path):

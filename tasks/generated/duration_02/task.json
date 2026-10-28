@@ -1,0 +1,30 @@
+{
+  "task_id": "duration_02",
+  "base": "duration",
+  "module": "duration",
+  "seed": 1001,
+  "golden_seed": 0,
+  "mutations": [
+    {
+      "type": "wrong_initial_value",
+      "function": "_check_order",
+      "line": 74,
+      "col": 4,
+      "detail": "-1->0",
+      "key": "wrong_initial_value:74:4:-1->0",
+      "exposed_by_visible": true,
+      "hidden_failed_alone": 6
+    }
+  ],
+  "visible_cases": [
+    "parse_days_hours",
+    "parse_spaced",
+    "format_mixed",
+    "format_carry",
+    "format_hours"
+  ],
+  "visible_failed": 1,
+  "hidden_failed": 6,
+  "hidden_total": 42,
+  "rejected_candidates": {}
+}

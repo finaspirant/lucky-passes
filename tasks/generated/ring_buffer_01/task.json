@@ -1,0 +1,30 @@
+{
+  "task_id": "ring_buffer_01",
+  "base": "ring_buffer",
+  "module": "ring_buffer",
+  "seed": 2000,
+  "golden_seed": 0,
+  "mutations": [
+    {
+      "type": "wrong_initial_value",
+      "function": "RingBuffer.__init__",
+      "line": 43,
+      "col": 8,
+      "detail": "0->1",
+      "key": "wrong_initial_value:43:8:0->1",
+      "exposed_by_visible": true,
+      "hidden_failed_alone": 11
+    }
+  ],
+  "visible_cases": [
+    "overwrite",
+    "len_not_full",
+    "full",
+    "overwrite_then_pop",
+    "clear"
+  ],
+  "visible_failed": 1,
+  "hidden_failed": 11,
+  "hidden_total": 28,
+  "rejected_candidates": {}
+}

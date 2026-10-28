@@ -1,0 +1,28 @@
+{
+  "task_id": "ring_buffer_02",
+  "base": "ring_buffer",
+  "module": "ring_buffer",
+  "seed": 2001,
+  "golden_seed": 0,
+  "mutations": [
+    {
+      "type": "flipped_comparison",
+      "function": "RingBuffer._require_items",
+      "line": 87,
+      "col": 11,
+      "detail": "op0:==->!=",
+      "key": "flipped_comparison:87:11:op0:==->!=",
+      "exposed_by_visible": true,
+      "hidden_failed_alone": 14
+    }
+  ],
+  "visible_cases": [
+    "fill",
+    "clear",
+    "peek_after_wrap"
+  ],
+  "visible_failed": 1,
+  "hidden_failed": 14,
+  "hidden_total": 28,
+  "rejected_candidates": {}
+}

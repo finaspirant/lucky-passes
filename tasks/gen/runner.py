@@ -6,6 +6,7 @@ Only scoring code may import run_hidden. The agent gets a wrapper around run_vis
 import ast
 import json
 import os
+import re
 import shutil
 import subprocess
 import sys
@@ -29,8 +30,8 @@ def pytest_command(tmp, report, test_name):
 def run_tests(module_name, source, test_file, timeout=TIMEOUT_SECONDS, include_output=False):
     """Write source as <module_name>.py next to a copy of test_file and run pytest on it.
 
-    Returns {"passed", "failed", "failing", "error"}, plus "output" (truncated pytest
-    stdout) when include_output is set. "error" is None on a normal run, otherwise a
+    Returns {"passed", "failed", "failing", "exceptions", "error"}, plus "output" (truncated
+    pytest stdout) when include_output is set. "error" is None on a normal run, otherwise a
     short reason ("timeout", "no tests ran"); in that case nothing counts as passed.
     """
     with tempfile.TemporaryDirectory(prefix="lp_run_") as tmp:
@@ -44,29 +45,39 @@ def run_tests(module_name, source, test_file, timeout=TIMEOUT_SECONDS, include_o
             proc = subprocess.run(cmd, cwd=tmp, env=env, capture_output=True, text=True, timeout=timeout)
             stdout = proc.stdout
         except subprocess.TimeoutExpired:
-            result, stdout = {"passed": 0, "failed": 0, "failing": [], "error": "timeout"}, "timeout"
+            result, stdout = {"passed": 0, "failed": 0, "failing": [], "exceptions": [], "error": "timeout"}, "timeout"
         else:
             if report.exists():
                 result = parse_report(report)
             else:
-                result = {"passed": 0, "failed": 0, "failing": [], "error": "no report"}
+                result = {"passed": 0, "failed": 0, "failing": [], "exceptions": [], "error": "no report"}
     if include_output:
         result["output"] = stdout[:OUTPUT_LIMIT]
     return result
 
 
 def parse_report(report):
-    """Count passing and failing test cases in a pytest JUnit XML report."""
-    passed, failing = 0, []
+    """Count passing and failing test cases in a pytest JUnit XML report.
+
+    "exceptions" lists the uncaught exception types (e.g. "IndexError") that failing tests died on.
+    """
+    passed, failing, exceptions = 0, [], set()
     for case in ET.parse(report).iter("testcase"):
         if case.find("skipped") is not None:
             continue
-        if case.find("failure") is not None or case.find("error") is not None:
-            failing.append(case.get("name"))
-        else:
+        problem = case.find("failure")
+        if problem is None:
+            problem = case.find("error")
+        if problem is None:
             passed += 1
+            continue
+        failing.append(case.get("name"))
+        match = re.match(r"(\w+(?:Error|Exception))\b", problem.get("message", ""))
+        if match:
+            exceptions.add(match.group(1))
     error = None if passed or failing else "no tests ran"
-    return {"passed": passed, "failed": len(failing), "failing": failing, "error": error}
+    return {"passed": passed, "failed": len(failing), "failing": failing,
+            "exceptions": sorted(exceptions), "error": error}
 
 
 def _run(task_dir, source, test_name, include_output):

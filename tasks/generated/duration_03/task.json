@@ -1,0 +1,39 @@
+{
+  "task_id": "duration_03",
+  "base": "duration",
+  "module": "duration",
+  "seed": 1002,
+  "golden_seed": 0,
+  "mutations": [
+    {
+      "type": "off_by_one",
+      "function": "_scan_components",
+      "line": 63,
+      "col": 17,
+      "detail": "1->2",
+      "key": "off_by_one:63:17:1->2",
+      "exposed_by_visible": false,
+      "hidden_failed_alone": 5
+    },
+    {
+      "type": "inverted_condition",
+      "function": "_split_seconds",
+      "line": 96,
+      "col": 8,
+      "detail": "test",
+      "key": "inverted_condition:96:8:test",
+      "exposed_by_visible": true,
+      "hidden_failed_alone": 12
+    }
+  ],
+  "visible_cases": [
+    "parse_seconds",
+    "parse_minutes",
+    "parse_out_of_order",
+    "format_mixed"
+  ],
+  "visible_failed": 1,
+  "hidden_failed": 17,
+  "hidden_total": 42,
+  "rejected_candidates": {}
+}

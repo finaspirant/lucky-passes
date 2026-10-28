@@ -1,0 +1,42 @@
+{
+  "task_id": "ring_buffer_03",
+  "base": "ring_buffer",
+  "module": "ring_buffer",
+  "seed": 2002,
+  "golden_seed": 0,
+  "mutations": [
+    {
+      "type": "off_by_one",
+      "function": "RingBuffer._take_oldest",
+      "line": 82,
+      "col": 35,
+      "detail": "1->0",
+      "key": "off_by_one:82:35:1->0",
+      "exposed_by_visible": true,
+      "hidden_failed_alone": 5
+    },
+    {
+      "type": "flipped_comparison",
+      "function": "RingBuffer.__init__",
+      "line": 38,
+      "col": 11,
+      "detail": "op0:<-><=",
+      "key": "flipped_comparison:38:11:op0:<-><=",
+      "exposed_by_visible": false,
+      "hidden_failed_alone": 6
+    }
+  ],
+  "visible_cases": [
+    "fill",
+    "fifo_pop",
+    "len_not_full",
+    "full",
+    "peek"
+  ],
+  "visible_failed": 1,
+  "hidden_failed": 11,
+  "hidden_total": 28,
+  "rejected_candidates": {
+    "too many hidden failures (trivial bug)": 20
+  }
+}

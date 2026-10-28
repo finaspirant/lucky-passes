@@ -82,7 +82,7 @@ HIDDEN_EDGE = [
 
 
 def golden_exprs(rng):
-    names = ["push", "push", "push", "pop", "peek", "len", "list", "is_full"]
+    names = ["push", "push", "push", "pop", "peek", "len", "list", "is_full", "clear"]
     exprs = []
     for _ in range(10):
         steps = []

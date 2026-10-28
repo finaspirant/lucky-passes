@@ -55,3 +55,18 @@ These are enforced when the agent loop is built.
 - The workspace is a fresh temp directory outside the repo, containing only the buggy module and `test_visible.py`.
 - Visible tests are re-copied from the trusted source before every `run_visible` call.
 - `task.json`, solutions and hidden tests are never in the workspace.
+
+## Design decisions
+
+**Oct 28, 2026** (task generator review, before any results)
+
+- Candidates that time out or crash the runner are rejected, not counted as failures.
+- Candidates that fail more than 50% of hidden tests are rejected as trivial.
+- No candidate may make a test die on an uncaught IndexError. Constant subscript indexes (`x[1]`, `x[-1]`) are never off_by_one sites.
+- Negative int literals are one constant: off_by_one turns `-1` into `0` or `-2`, never `-0`.
+- wrong_initial_value substitutes only int, bool and str literals (0↔1, other ints→0, True↔False, ""↔" "). No list or None substitutions.
+- A two-mutation set is rejected if the combined bug fails fewer hidden tests than either mutation alone (masking).
+- Within a base, no two tasks mutate the same line, so no bug is counted twice.
+- Mutation sites may be anywhere in the module; helper sites are tried first.
+- Ring buffer golden sequences include `clear`.
+- When scaling to more bases, mutations at input-validation sites should be at most about one third of the pool.

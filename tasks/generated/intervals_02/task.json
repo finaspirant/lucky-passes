@@ -1,0 +1,30 @@
+{
+  "task_id": "intervals_02",
+  "base": "intervals",
+  "module": "intervals",
+  "seed": 3001,
+  "golden_seed": 0,
+  "mutations": [
+    {
+      "type": "off_by_one",
+      "function": "_check_min_length",
+      "line": 109,
+      "col": 20,
+      "detail": "1->2",
+      "key": "off_by_one:109:20:1->2",
+      "exposed_by_visible": true,
+      "hidden_failed_alone": 8
+    }
+  ],
+  "visible_cases": [
+    "insert_overlap",
+    "overlaps_true",
+    "total_disjoint",
+    "free_basic",
+    "free_min_length"
+  ],
+  "visible_failed": 1,
+  "hidden_failed": 8,
+  "hidden_total": 50,
+  "rejected_candidates": {}
+}

@@ -1,0 +1,45 @@
+{
+  "task_id": "intervals_03",
+  "base": "intervals",
+  "module": "intervals",
+  "seed": 3002,
+  "golden_seed": 0,
+  "mutations": [
+    {
+      "type": "flipped_comparison",
+      "function": "_validate",
+      "line": 66,
+      "col": 7,
+      "detail": "op0:>=->>",
+      "key": "flipped_comparison:66:7:op0:>=->>",
+      "exposed_by_visible": false,
+      "hidden_failed_alone": 3
+    },
+    {
+      "type": "off_by_one",
+      "function": "free_slots",
+      "line": 51,
+      "col": 63,
+      "detail": "1->0",
+      "key": "off_by_one:51:63:1->0",
+      "exposed_by_visible": true,
+      "hidden_failed_alone": 7
+    }
+  ],
+  "visible_cases": [
+    "merge_overlapping",
+    "merge_unsorted",
+    "overlaps_true",
+    "free_basic",
+    "free_min_length"
+  ],
+  "visible_failed": 1,
+  "hidden_failed": 9,
+  "hidden_total": 50,
+  "rejected_candidates": {
+    "no visible-pool failure": 12,
+    "too many hidden failures (trivial bug)": 5,
+    "uncaught IndexError": 6,
+    "a mutation alone fails no hidden test": 3
+  }
+}
