@@ -54,3 +54,7 @@ This file is committed before results and must not be edited after results come 
 - Primary analysis is on all tasks.
 - Secondary analysis is on tasks where 1 to 4 of 5 attempts pass hidden tests.
 - Bootstrap resampling is clustered by base program. Intervals are expected to be wide.
+
+**Date:** Oct 28, 2026
+
+- Calibration probe 1 hit a ceiling (27/27). Agent settings will be chosen by calibration on the 9 calibration tasks only, before any experiment runs. Rule: choose the reasoning-effort setting (and, if needed, task-generation changes) whose single-shot hidden pass rate is between 30% and 80% with the largest number of mixed tasks. The chosen setting is then fixed for the experiment.
