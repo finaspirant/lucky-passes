@@ -86,3 +86,128 @@ These are enforced when the agent loop is built.
 - Reasoning strength: `low`, set server-wide with `--chat-template-kwargs '{"reasoning_strength":"low"}'` and per request by the probe. Reasoning cannot be turned off, and there is no `minimal` level.
 - The effort parameter is provider-specific. On meta-api it is top-level `reasoning_effort`. On local-llama it is `chat_template_kwargs.reasoning_strength`, because llama.cpp does not implement `reasoning_effort`. `calibration/probe.py --provider` does the mapping.
 - Smoke test (`calibration/local_smoke.py`, log `results/calibration/glimmer_smoke.jsonl`): a structured `tool_calls` entry with `finish_reason: "tool_calls"`, and reasoning in `reasoning_content`, not `content`.
+
+**Oct 29, 2026** (agent loop, recorded before any run)
+
+Code: `agent/loop.py`, `agent/tools.py`; tests in `tests/test_agent.py`.
+
+- Model: `muse-spark-1.3` at `https://api.meta.ai/v1` (Chat Completions with `tools`), top-level `reasoning_effort="minimal"`.
+- Sampling: API defaults (no temperature, top_p or seed sent).
+- Limits: at most 15 steps per attempt (a step is one model call plus the tool calls it returns); at most 5 tool calls per step (later calls in that step get a "skipped" result); `write_file` content at most 65536 bytes; request timeout 300 s.
+- Stopping rules: `finish` (the agent calls `finish`; later calls in the same step are ignored); `no_tool_call` (a reply with no tool call, counted as declaring done); `step_limit` (15 steps; the attempt is still scored); `api_error` (a call still fails after 3 retries, waiting 5, 20, 60 s; the attempt is excluded from analysis and counted).
+- Workspace: a fresh temp directory per attempt with only `<module>.py` (the stub) and a copy of `test_visible.py`. Paths must be plain file names; only `<module>.py` can be written. `run_visible` runs the task's canonical `test_visible.py`, never the workspace copy. Hidden tests and references are never in the workspace.
+- Final code: the content of `<module>.py` in the workspace when the loop stops, never code taken from a message.
+- Conversation: the assistant's visible content and tool calls are sent back to the model; reasoning text is logged but not sent back.
+- Parallelism: attempts run in threads (default 4 workers); each has its own workspace, conversation and log file. Completed attempts are skipped on rerun, so a run can be resumed.
+- Logging: one JSONL file per attempt, `<run dir>/trajectories/<task_id>_<NN>.jsonl`: a header (run, task, attempt, model, effort, sampling, limits, system prompt, first message, tool schemas); one line per step (assistant content, reasoning text if returned, tool calls with arguments, status and the exact result shown to the agent, input/output/reasoning tokens, latency, retries, finish reason, module line count and SHA-256 after the step); a stop line (stop reason, steps, error, final code and its line count).
+- Scorers: the process judge's loader strips reasoning text (it sees assistant visible messages, tool calls and tool results only). Hidden-test results go to a separate `outcomes.jsonl` that no judge loader reads. The leak check fails a run if any trajectory contains `test_hidden` or a hidden test name.
+
+System prompt (exact):
+
+```text
+You are a careful Python developer working in a small workspace. Your task is to implement one function so that it meets its specification.
+
+The workspace contains the module to implement, whose docstring is the complete specification, and test_visible.py, a few example tests. Your solution will also be checked against additional tests that you cannot see, so follow the specification exactly, not just the examples.
+
+Tools:
+- read_file(path, start_line, end_line): read a workspace file, optionally a range of lines.
+- write_file(path, content): replace the whole content of the module file. Only the module file can be written.
+- run_visible(): run test_visible.py against the current module and see the results.
+- finish(message): call this when you are done. The module file as it is then is your solution.
+
+You have at most 15 steps; each of your replies is one step. Write your code to the module file with write_file; code that only appears in your replies is not your solution.
+```
+
+First-message template (exact; `file_list` has one line per file, `- <name> (<N> lines)`, module first):
+
+```text
+Implement the function in `{module_file}`.
+
+Files in the workspace:
+{file_list}
+```
+
+Tool schemas (exact):
+
+```json
+[
+  {
+    "type": "function",
+    "function": {
+      "name": "read_file",
+      "description": "Read a file in the workspace, optionally only a range of lines. Lines are returned numbered from 1.",
+      "parameters": {
+        "type": "object",
+        "properties": {
+          "path": {
+            "type": "string",
+            "description": "A file name in the workspace."
+          },
+          "start_line": {
+            "type": "integer",
+            "description": "First line to read (1-based, optional)."
+          },
+          "end_line": {
+            "type": "integer",
+            "description": "Last line to read, inclusive (optional)."
+          }
+        },
+        "required": [
+          "path"
+        ]
+      }
+    }
+  },
+  {
+    "type": "function",
+    "function": {
+      "name": "write_file",
+      "description": "Replace the whole content of the module file. Only the module file can be written.",
+      "parameters": {
+        "type": "object",
+        "properties": {
+          "path": {
+            "type": "string",
+            "description": "The module file name."
+          },
+          "content": {
+            "type": "string",
+            "description": "The complete new file content."
+          }
+        },
+        "required": [
+          "path",
+          "content"
+        ]
+      }
+    }
+  },
+  {
+    "type": "function",
+    "function": {
+      "name": "run_visible",
+      "description": "Run test_visible.py against the current module and return the results.",
+      "parameters": {
+        "type": "object",
+        "properties": {}
+      }
+    }
+  },
+  {
+    "type": "function",
+    "function": {
+      "name": "finish",
+      "description": "Declare that you are done. The module file as it is now is your solution.",
+      "parameters": {
+        "type": "object",
+        "properties": {
+          "message": {
+            "type": "string",
+            "description": "A short summary of what you did."
+          }
+        }
+      }
+    }
+  }
+]
+```

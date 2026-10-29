@@ -29,6 +29,8 @@ Creates self-generated bug-fix tasks for the experiment.
 
 Runs the coding agent for repeated attempts on each task.
 
+- Oct 29, 2026: agent loop (read_file, write_file, run_visible, finish; stopping rules; step-level JSONL logging; parallel isolated attempts) with tests; exact prompts, schemas and limits recorded in DESIGN.md before any run.
+
 ## Process judges
 
 Scores agent trajectories on process dimensions.
