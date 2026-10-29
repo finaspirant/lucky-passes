@@ -1,0 +1,23 @@
+{
+  "task_id": "tennis_score_01",
+  "name": "tennis_score",
+  "module": "tennis_score",
+  "kind": "implement",
+  "seed": 3003,
+  "case_time_limit": 3,
+  "large_time_limit": null,
+  "test_timeout": 300,
+  "visible_cases": [
+    "start",
+    "points",
+    "deuce",
+    "first_game",
+    "straight_sets"
+  ],
+  "hidden_counts": {
+    "edge_val": 8,
+    "edge_logic": 25,
+    "random": 25,
+    "large": 0
+  }
+}

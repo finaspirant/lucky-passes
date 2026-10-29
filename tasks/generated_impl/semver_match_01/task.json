@@ -1,0 +1,23 @@
+{
+  "task_id": "semver_match_01",
+  "name": "semver_match",
+  "module": "semver_match",
+  "kind": "implement",
+  "seed": 3001,
+  "case_time_limit": 3,
+  "large_time_limit": null,
+  "test_timeout": 300,
+  "visible_cases": [
+    "caret",
+    "caret_next_major",
+    "tilde_next_minor",
+    "and_range",
+    "or_range"
+  ],
+  "hidden_counts": {
+    "edge_val": 21,
+    "edge_logic": 32,
+    "random": 30,
+    "large": 0
+  }
+}

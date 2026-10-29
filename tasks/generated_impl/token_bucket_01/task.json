@@ -1,0 +1,23 @@
+{
+  "task_id": "token_bucket_01",
+  "name": "token_bucket",
+  "module": "token_bucket",
+  "kind": "implement",
+  "seed": 3005,
+  "case_time_limit": 3,
+  "large_time_limit": 10,
+  "test_timeout": 310,
+  "visible_cases": [
+    "burst",
+    "refill",
+    "fractional_cost",
+    "cost_above_capacity",
+    "decreasing_time"
+  ],
+  "hidden_counts": {
+    "edge_val": 22,
+    "edge_logic": 12,
+    "random": 25,
+    "large": 1
+  }
+}

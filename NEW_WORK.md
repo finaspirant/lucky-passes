@@ -17,6 +17,9 @@ Creates self-generated bug-fix tasks for the experiment.
 - Oct 28, 2026 (calibration only, not experiment data): single-shot probe, muse-spark-1.3, 9 tasks x 3 attempts; 27/27 passed hidden tests.
 - Oct 28, 2026 (calibration only, not experiment data): reasoning-effort discovery, then probes at minimal and low effort; both 27/27, so no setting meets the preregistered 30-80% rule.
 - Oct 28, 2026 (calibration only, not experiment data): local Muse Glimmer 30B (Q4_K_XL, llama-server) smoke test, then single-shot probe at low reasoning strength; 27/27.
+- Oct 29, 2026: preregistration amendment (implementation tasks); six implementation problems (text_justify, semver_match, glob_match, tennis_score, nth_weekday_dates, token_bucket) with spec stubs, references and case pools.
+- Oct 29, 2026: implementation-task generator and validator (hidden tests edge_val_, edge_logic_, random_, large_; per-case and per-large-case time limits); probe extended with --kind implement.
+- Oct 29, 2026 (calibration only, not experiment data): implementation probe, muse-spark-1.3 at minimal, 6 tasks x 3 attempts; 16/18 passed hidden tests (89%), 2 mixed tasks, so the 30-80% rule is not met.
 
 ## Agent loop
 

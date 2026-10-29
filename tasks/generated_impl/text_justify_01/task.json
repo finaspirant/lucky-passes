@@ -1,0 +1,23 @@
+{
+  "task_id": "text_justify_01",
+  "name": "text_justify",
+  "module": "text_justify",
+  "kind": "implement",
+  "seed": 3000,
+  "case_time_limit": 3,
+  "large_time_limit": null,
+  "test_timeout": 300,
+  "visible_cases": [
+    "example",
+    "single_word",
+    "uneven_gaps",
+    "empty",
+    "word_too_long"
+  ],
+  "hidden_counts": {
+    "edge_val": 11,
+    "edge_logic": 10,
+    "random": 20,
+    "large": 0
+  }
+}

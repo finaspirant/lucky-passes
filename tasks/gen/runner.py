@@ -82,8 +82,9 @@ def parse_report(report):
 
 def _run(task_dir, source, test_name, include_output):
     task_dir = Path(task_dir)
-    module = json.loads((task_dir / "task.json").read_text())["module"]
-    return run_tests(module, source, task_dir / test_name, include_output=include_output)
+    task = json.loads((task_dir / "task.json").read_text())
+    timeout = task.get("test_timeout", TIMEOUT_SECONDS)
+    return run_tests(task["module"], source, task_dir / test_name, timeout=timeout, include_output=include_output)
 
 
 def run_visible(task_dir, source):

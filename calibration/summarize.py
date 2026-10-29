@@ -6,7 +6,7 @@ from collections import defaultdict
 from pathlib import Path
 
 LOG_PATH = Path("results/calibration/probe.jsonl")
-TASK_DIR = Path("tasks/generated")
+TASK_DIRS = {"fix": Path("tasks/generated"), "implement": Path("tasks/generated_impl")}
 
 
 def main(log_path):
@@ -19,13 +19,14 @@ def main(log_path):
     print("|---|---|---|---|---|")
     buckets = {"0/n": 0, "mixed": 0, "n/n": 0}
     for task_id, runs in sorted(by_task.items()):
-        task = json.loads((TASK_DIR / task_id / "task.json").read_text())
+        task = json.loads((TASK_DIRS[runs[0].get("kind", "fix")] / task_id / "task.json").read_text())
         scored = [r for r in runs if "error" not in r]
         hidden = sum(r["hidden_pass"] for r in scored)
         visible = sum(r["visible_pass"] for r in scored)
         only_exposed = [r.get("fixed_only_exposed_bug") for r in scored if not r["hidden_pass"]]
-        only_text = ", ".join(str(x) for x in only_exposed) if len(task["mutations"]) > 1 else "-"
-        print(f"| {task_id} | {len(task['mutations'])} | {visible}/{len(scored)} | {hidden}/{len(scored)} | {only_text} |")
+        mutations = task.get("mutations", [])
+        only_text = ", ".join(str(x) for x in only_exposed) if len(mutations) > 1 else "-"
+        print(f"| {task_id} | {len(mutations) or '-'} | {visible}/{len(scored)} | {hidden}/{len(scored)} | {only_text} |")
         key = "0/n" if hidden == 0 else "n/n" if hidden == len(scored) else "mixed"
         buckets[key] += 1
 
@@ -50,6 +51,10 @@ def main(log_path):
           f"avg decode tok/s {total('decode_tokens_per_second') / n:.1f} (0 if not reported)")
     print(f"suspicious attempts: {[(r['task_id'], r['attempt'], r['suspicious']) for r in scored if r['suspicious']]}")
     print(f"unchanged source: {sum(not r['changed_source'] for r in scored)}")
+    for r in scored:
+        if not r["hidden_pass"] and "hidden_failed_by_category" in r:
+            print(f"failed {r['task_id']} #{r['attempt']}: visible_pass={r['visible_pass']} "
+                  f"{r['hidden_failed_by_category']} error={r.get('hidden_error')}")
     print(f"usage keys seen: {sorted({k for r in scored for k in r['usage_keys']})}")
 
 

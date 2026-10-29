@@ -1,7 +1,11 @@
 """Calibration probe: single-shot fix attempts on the generated tasks.
 
 Calibration only, not experiment data.
-Usage: python -m calibration.probe [--attempts 3] [--provider meta-api|local-llama] [--base-url URL] [--effort LEVEL]
+Usage: python -m calibration.probe [--attempts 3] [--kind fix|implement] [--provider meta-api|local-llama]
+                                  [--base-url URL] [--effort LEVEL]
+
+--kind fix (default) runs the bug-fix tasks in tasks/generated; --kind implement runs the
+implementation tasks in tasks/generated_impl and logs to probe_impl_<level>.jsonl.
 
 meta-api (muse-spark-1.3): --effort is sent as top-level reasoning_effort (minimal, low, medium, high, xhigh, max).
   Logs to probe.jsonl without --effort, otherwise probe_effort_<level>.jsonl.
@@ -28,7 +32,8 @@ PROVIDERS = {
     "local-llama": {"base_url": "http://127.0.0.1:8080/v1", "model": "muse-glimmer-30b", "timeout": 1800,
                     "efforts": ["low", "medium", "high", "xhigh"]},
 }
-TASK_DIR = Path("tasks/generated")
+TASK_DIRS = {"fix": Path("tasks/generated"), "implement": Path("tasks/generated_impl")}
+CATEGORIES = ["edge_val", "edge_logic", "random", "large"]
 SOLUTION_DIR = Path("tasks/_solutions")
 LOG_DIR = Path("results/calibration")
 
@@ -45,6 +50,21 @@ Output of running the visible tests against it:
 ```
 
 Return the full corrected module in a single ```python code block."""
+
+IMPLEMENT_PROMPT = """Implement the Python module `{module}.py`. The stub below gives the function signature; its
+docstring is the complete specification.
+
+```python
+{source}
+```
+
+The visible tests, `test_visible.py`:
+
+```python
+{tests}
+```
+
+Return the complete module in a single ```python code block."""
 
 
 def load_env(path=".env"):
@@ -102,14 +122,31 @@ def fixed_only_exposed(task_dir, task, hidden_failing):
     return sorted(alone["failing"]) == sorted(hidden_failing)
 
 
+def build_prompt(task_dir, task):
+    """Return (starting source, prompt) for a fix or implement task."""
+    source = (task_dir / f"{task['module']}.py").read_text()
+    if task.get("kind") == "implement":
+        tests = (task_dir / "test_visible.py").read_text()
+        return source, IMPLEMENT_PROMPT.format(module=task["module"], source=source, tests=tests)
+    output = run_visible(task_dir, source)["output"]
+    return source, PROMPT.format(module=task["module"], source=source, output=output)
+
+
+def failures_by_category(failing):
+    """Count failing hidden tests by name prefix (implement tasks only)."""
+    counts = dict.fromkeys(CATEGORIES, 0)
+    for name in failing:
+        counts[next(c for c in CATEGORIES if name.startswith(f"test_{c}_"))] += 1
+    return counts
+
+
 def attempt(task_dir, task, number, provider, base_url, effort=None):
-    buggy = (task_dir / f"{task['module']}.py").read_text()
-    visible_output = run_visible(task_dir, buggy)["output"]
-    record = {"timestamp": datetime.now(timezone.utc).isoformat(), "task_id": task["task_id"],
+    kind = task.get("kind", "fix")
+    buggy, prompt = build_prompt(task_dir, task)
+    record = {"timestamp": datetime.now(timezone.utc).isoformat(), "task_id": task["task_id"], "kind": kind,
               "attempt": number, "provider": provider, "model": PROVIDERS[provider]["model"],
               "reasoning_effort": effort}
     try:
-        prompt = PROMPT.format(module=task["module"], source=buggy, output=visible_output)
         reply, usage, timings, latency = chat(prompt, provider, base_url, effort)
     except (urllib.error.URLError, TimeoutError) as err:
         return {**record, "error": f"api: {getattr(err, 'code', '')} {err}"[:300]}
@@ -124,25 +161,31 @@ def attempt(task_dir, task, number, provider, base_url, effort=None):
         "output_tokens_per_second": round((usage.get("completion_tokens") or 0) / latency, 1),
         "decode_tokens_per_second": round(timings["predicted_per_second"], 1) if timings else None,
     })
-    if not record["hidden_pass"]:
+    if kind == "implement":
+        record["hidden_failed_by_category"] = failures_by_category(hidden["failing"])
+        record["hidden_error"] = hidden["error"]
+        record["source"] = fixed
+    elif not record["hidden_pass"]:
         record["fixed_only_exposed_bug"] = fixed_only_exposed(task_dir, task, hidden["failing"])
     return record
 
 
-def log_name(provider, effort):
+def log_name(provider, effort, kind="fix"):
+    if kind == "implement":
+        return f"probe_impl_{effort or 'default'}.jsonl"
     if provider == "local-llama":
         return f"probe_glimmer_{effort or 'default'}.jsonl"
     return f"probe_effort_{effort}.jsonl" if effort else "probe.jsonl"
 
 
-def main(attempts, provider, base_url, effort):
+def main(attempts, provider, base_url, effort, kind="fix"):
     if effort and effort not in PROVIDERS[provider]["efforts"]:
         raise SystemExit(f"--effort {effort} is not valid for {provider}: {PROVIDERS[provider]['efforts']}")
     if provider == "meta-api":
         load_env()
     LOG_DIR.mkdir(parents=True, exist_ok=True)
-    log_path = LOG_DIR / log_name(provider, effort)
-    for task_dir in sorted(p for p in TASK_DIR.iterdir() if p.is_dir()):
+    log_path = LOG_DIR / log_name(provider, effort, kind)
+    for task_dir in sorted(p for p in TASK_DIRS[kind].iterdir() if p.is_dir()):
         task = json.loads((task_dir / "task.json").read_text())
         for number in range(1, attempts + 1):
             record = attempt(task_dir, task, number, provider, base_url, effort)
@@ -156,8 +199,10 @@ def main(attempts, provider, base_url, effort):
 if __name__ == "__main__":
     parser = argparse.ArgumentParser()
     parser.add_argument("--attempts", type=int, default=3)
+    parser.add_argument("--kind", choices=sorted(TASK_DIRS), default="fix")
     parser.add_argument("--provider", choices=sorted(PROVIDERS), default="meta-api")
     parser.add_argument("--base-url", help="defaults to the provider's URL")
     parser.add_argument("--effort", choices=["minimal", "low", "medium", "high", "xhigh", "max"])
     args = parser.parse_args()
-    main(args.attempts, args.provider, args.base_url or PROVIDERS[args.provider]["base_url"], args.effort)
+    main(args.attempts, args.provider, args.base_url or PROVIDERS[args.provider]["base_url"], args.effort,
+         args.kind)

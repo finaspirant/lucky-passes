@@ -1,0 +1,23 @@
+{
+  "task_id": "nth_weekday_dates_01",
+  "name": "nth_weekday_dates",
+  "module": "nth_weekday_dates",
+  "kind": "implement",
+  "seed": 3004,
+  "case_time_limit": 3,
+  "large_time_limit": 10,
+  "test_timeout": 320,
+  "visible_cases": [
+    "first_monday",
+    "last_friday",
+    "fifth_friday_skips_months",
+    "single_day_range",
+    "invalid_n"
+  ],
+  "hidden_counts": {
+    "edge_val": 11,
+    "edge_logic": 13,
+    "random": 25,
+    "large": 2
+  }
+}

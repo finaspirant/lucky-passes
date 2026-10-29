@@ -1,0 +1,23 @@
+{
+  "task_id": "glob_match_01",
+  "name": "glob_match",
+  "module": "glob_match",
+  "kind": "implement",
+  "seed": 3002,
+  "case_time_limit": 3,
+  "large_time_limit": 5,
+  "test_timeout": 320,
+  "visible_cases": [
+    "star_suffix",
+    "question",
+    "class",
+    "negated_class",
+    "escaped_star"
+  ],
+  "hidden_counts": {
+    "edge_val": 2,
+    "edge_logic": 39,
+    "random": 30,
+    "large": 4
+  }
+}
