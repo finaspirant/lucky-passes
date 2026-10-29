@@ -35,5 +35,8 @@ def glob_match(text, pattern):
 
     Examples: "[]a]" matches "]" or "a"; "[!]a]" matches any one character except "]" and
     "a"; "[a-]" matches "a" or "-"; "[ab" matches the text "[ab"; "a\\*b" matches only "a*b".
+
+    Scale: text and pattern may each be several thousand characters long; recursion depth
+    must not grow with their length, and each call must finish in about a second.
     """
     raise NotImplementedError

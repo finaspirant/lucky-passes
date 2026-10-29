@@ -20,6 +20,8 @@ Creates self-generated bug-fix tasks for the experiment.
 - Oct 29, 2026: preregistration amendment (implementation tasks); six implementation problems (text_justify, semver_match, glob_match, tennis_score, nth_weekday_dates, token_bucket) with spec stubs, references and case pools.
 - Oct 29, 2026: implementation-task generator and validator (hidden tests edge_val_, edge_logic_, random_, large_; per-case and per-large-case time limits); probe extended with --kind implement.
 - Oct 29, 2026 (calibration only, not experiment data): implementation probe, muse-spark-1.3 at minimal, 6 tasks x 3 attempts; 16/18 passed hidden tests (89%), 2 mixed tasks, so the 30-80% rule is not met.
+- Oct 29, 2026 (calibration only, not experiment data): Probe impl-1: 16/18, above band; replacing text_justify, semver_match, tennis_score, nth_weekday_dates with harder problems.
+- Oct 29, 2026: four replacement problems (cron_next, expr_eval, lfu_cache, sliding_median); retired generated tasks moved to tasks/retired_impl. glob_match and token_bucket docstrings now state their scale requirements, to match the new rule that every tested scale is stated.
 
 ## Agent loop
 

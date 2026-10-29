@@ -22,8 +22,12 @@ from tasks.gen.runner import run_tests
 
 IMPL_DIR = Path("tasks/_impl")
 OUT_DIR = Path("tasks/generated_impl")
-PROBLEMS = ["text_justify", "semver_match", "glob_match", "tennis_score", "nth_weekday_dates", "token_bucket"]
-BASE_SEED = 3000
+# Active problems and their random-case seeds. Seeds are fixed per problem so that
+# replacing a problem never changes another problem's cases. Retired problems
+# (text_justify 3000, semver_match 3001, tennis_score 3003, nth_weekday_dates 3004)
+# stay in tasks/_impl; their generated tasks are in tasks/retired_impl.
+PROBLEMS = {"glob_match": 3002, "token_bucket": 3005, "cron_next": 3006, "expr_eval": 3007,
+            "lfu_cache": 3008, "sliding_median": 3009}
 CASE_TIME_LIMIT = 3
 FILE_TIMEOUT = 300
 
@@ -54,8 +58,12 @@ def case_time_limit(request):
 
 
 def run_limited(expr, seconds):
-    """Evaluate expr in a child process with a time limit; return the repr of its value."""
-    code = PRELUDE + "\\nprint(repr(" + expr + "))\\n"
+    """Evaluate expr in a child process with a time limit.
+
+    Returns the repr of its value, or "raises <ExceptionName>" if it raises.
+    """
+    code = (PRELUDE + "\\ntry:\\n    print(repr(" + expr + "))\\n"
+            "except Exception as exc:\\n    print('raises ' + type(exc).__name__)\\n")
     here = os.path.dirname(os.path.abspath(__file__))
     try:
         proc = subprocess.run([sys.executable, "-c", code], cwd=here, capture_output=True, text=True,
@@ -65,7 +73,8 @@ def run_limited(expr, seconds):
     if proc.returncode:
         lines = proc.stderr.strip().splitlines()
         pytest.fail(lines[-1] if lines else "child process failed")
-    return proc.stdout.strip()
+    lines = proc.stdout.strip().splitlines()
+    return lines[-1] if lines else ""
 '''
 
 
@@ -113,7 +122,8 @@ def build(name, seed):
     randoms = [(f"random_{i:02d}", expr, value)
                for i, (expr, value) in enumerate(zip(exprs, evaluate(name, prelude, exprs, reference)), 1)]
     large_values = evaluate(name, prelude, [expr for _, expr in cases.LARGE], reference)
-    large = [(n, expr, repr(value)) for (n, expr), value in zip(cases.LARGE, large_values)]
+    large = [(n, expr, f"raises {value.exc_name}" if isinstance(value, Raises) else repr(value))
+             for (n, expr), value in zip(cases.LARGE, large_values)]
     hidden = ([(f"edge_val_{n}", e, v) for n, e, v in cases.HIDDEN_EDGE_VAL]
               + [(f"edge_logic_{n}", e, v) for n, e, v in cases.HIDDEN_EDGE_LOGIC] + randoms)
     hidden_prelude = f"{prelude}\nCASE_TIME_LIMIT = {CASE_TIME_LIMIT}\nPRELUDE = {prelude!r}\n{HIDDEN_HELPERS}"
@@ -174,7 +184,7 @@ def main(args):
     if args == ["--validate"]:
         task_dirs = sorted(p for p in OUT_DIR.iterdir() if p.is_dir())
     else:
-        task_dirs = [write_task(name, BASE_SEED + PROBLEMS.index(name)) for name in args or PROBLEMS]
+        task_dirs = [write_task(name, PROBLEMS[name]) for name in args or PROBLEMS]
     for task_dir in task_dirs:
         problems = validate_task(task_dir)
         print(f"{task_dir.name}: {'ok' if not problems else problems}")
