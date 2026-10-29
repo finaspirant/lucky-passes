@@ -1,0 +1,23 @@
+{
+  "task_id": "cron_next_01",
+  "name": "cron_next",
+  "module": "cron_next",
+  "kind": "implement",
+  "seed": 3006,
+  "case_time_limit": 3,
+  "large_time_limit": 2,
+  "test_timeout": 310,
+  "visible_cases": [
+    "every_15_minutes",
+    "weekdays_at_9",
+    "day_of_month_or_week",
+    "next_year",
+    "four_fields"
+  ],
+  "hidden_counts": {
+    "edge_val": 3,
+    "edge_logic": 26,
+    "random": 30,
+    "large": 5
+  }
+}

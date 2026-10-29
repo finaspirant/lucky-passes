@@ -1,0 +1,23 @@
+{
+  "task_id": "expr_eval_01",
+  "name": "expr_eval",
+  "module": "expr_eval",
+  "kind": "implement",
+  "seed": 3007,
+  "case_time_limit": 3,
+  "large_time_limit": 5,
+  "test_timeout": 325,
+  "visible_cases": [
+    "precedence",
+    "parentheses",
+    "power_before_unary_minus",
+    "floor_division",
+    "trailing_operator"
+  ],
+  "hidden_counts": {
+    "edge_val": 3,
+    "edge_logic": 37,
+    "random": 30,
+    "large": 5
+  }
+}

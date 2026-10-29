@@ -1,0 +1,23 @@
+{
+  "task_id": "sliding_median_01",
+  "name": "sliding_median",
+  "module": "sliding_median",
+  "kind": "implement",
+  "seed": 3009,
+  "case_time_limit": 3,
+  "large_time_limit": 5,
+  "test_timeout": 310,
+  "visible_cases": [
+    "odd_window",
+    "even_window_types",
+    "window_is_whole_list",
+    "window_of_one",
+    "window_too_large"
+  ],
+  "hidden_counts": {
+    "edge_val": 3,
+    "edge_logic": 16,
+    "random": 30,
+    "large": 2
+  }
+}

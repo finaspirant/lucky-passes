@@ -30,8 +30,12 @@ def case_time_limit(request):
 
 
 def run_limited(expr, seconds):
-    """Evaluate expr in a child process with a time limit; return the repr of its value."""
-    code = PRELUDE + "\nprint(repr(" + expr + "))\n"
+    """Evaluate expr in a child process with a time limit.
+
+    Returns the repr of its value, or "raises <ExceptionName>" if it raises.
+    """
+    code = (PRELUDE + "\ntry:\n    print(repr(" + expr + "))\n"
+            "except Exception as exc:\n    print('raises ' + type(exc).__name__)\n")
     here = os.path.dirname(os.path.abspath(__file__))
     try:
         proc = subprocess.run([sys.executable, "-c", code], cwd=here, capture_output=True, text=True,
@@ -41,7 +45,8 @@ def run_limited(expr, seconds):
     if proc.returncode:
         lines = proc.stderr.strip().splitlines()
         pytest.fail(lines[-1] if lines else "child process failed")
-    return proc.stdout.strip()
+    lines = proc.stdout.strip().splitlines()
+    return lines[-1] if lines else ""
 
 def test_edge_val_text_not_str():
     with pytest.raises(TypeError):

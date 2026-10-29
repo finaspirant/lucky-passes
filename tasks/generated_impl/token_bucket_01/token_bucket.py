@@ -38,5 +38,6 @@ def token_bucket(capacity, rate, requests):
         give different answers.
 
     An empty requests list returns [].
+    Scale: requests may contain 100,000 entries, which must finish in about a second.
     """
     raise NotImplementedError

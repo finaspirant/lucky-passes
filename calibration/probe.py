@@ -6,6 +6,7 @@ Usage: python -m calibration.probe [--attempts 3] [--kind fix|implement] [--prov
 
 --kind fix (default) runs the bug-fix tasks in tasks/generated; --kind implement runs the
 implementation tasks in tasks/generated_impl and logs to probe_impl_<level>.jsonl.
+--log NAME overrides the log file name (inside results/calibration).
 
 meta-api (muse-spark-1.3): --effort is sent as top-level reasoning_effort (minimal, low, medium, high, xhigh, max).
   Logs to probe.jsonl without --effort, otherwise probe_effort_<level>.jsonl.
@@ -178,13 +179,13 @@ def log_name(provider, effort, kind="fix"):
     return f"probe_effort_{effort}.jsonl" if effort else "probe.jsonl"
 
 
-def main(attempts, provider, base_url, effort, kind="fix"):
+def main(attempts, provider, base_url, effort, kind="fix", log=None):
     if effort and effort not in PROVIDERS[provider]["efforts"]:
         raise SystemExit(f"--effort {effort} is not valid for {provider}: {PROVIDERS[provider]['efforts']}")
     if provider == "meta-api":
         load_env()
     LOG_DIR.mkdir(parents=True, exist_ok=True)
-    log_path = LOG_DIR / log_name(provider, effort, kind)
+    log_path = LOG_DIR / (log or log_name(provider, effort, kind))
     for task_dir in sorted(p for p in TASK_DIRS[kind].iterdir() if p.is_dir()):
         task = json.loads((task_dir / "task.json").read_text())
         for number in range(1, attempts + 1):
@@ -199,10 +200,11 @@ def main(attempts, provider, base_url, effort, kind="fix"):
 if __name__ == "__main__":
     parser = argparse.ArgumentParser()
     parser.add_argument("--attempts", type=int, default=3)
+    parser.add_argument("--log", help="log file name, overriding the default")
     parser.add_argument("--kind", choices=sorted(TASK_DIRS), default="fix")
     parser.add_argument("--provider", choices=sorted(PROVIDERS), default="meta-api")
     parser.add_argument("--base-url", help="defaults to the provider's URL")
     parser.add_argument("--effort", choices=["minimal", "low", "medium", "high", "xhigh", "max"])
     args = parser.parse_args()
     main(args.attempts, args.provider, args.base_url or PROVIDERS[args.provider]["base_url"], args.effort,
-         args.kind)
+         args.kind, args.log)

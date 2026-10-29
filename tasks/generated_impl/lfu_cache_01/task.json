@@ -1,0 +1,23 @@
+{
+  "task_id": "lfu_cache_01",
+  "name": "lfu_cache",
+  "module": "lfu_cache",
+  "kind": "implement",
+  "seed": 3008,
+  "case_time_limit": 3,
+  "large_time_limit": 5,
+  "test_timeout": 310,
+  "visible_cases": [
+    "frequency_then_recency",
+    "capacity_zero",
+    "tie_evicts_least_recent",
+    "put_replaces_value",
+    "put_missing_value"
+  ],
+  "hidden_counts": {
+    "edge_val": 3,
+    "edge_logic": 15,
+    "random": 30,
+    "large": 2
+  }
+}
