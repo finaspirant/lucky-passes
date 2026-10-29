@@ -73,3 +73,14 @@ This file is committed before results and must not be edited after results come 
 - The same calibration rule applies: the task set is usable if the single-shot hidden pass rate is 30-80% with several mixed tasks. If not, problems may be replaced with harder or easier ones and reprobed, before any experiment runs.
 - Selectors, metric, process dimensions, statistics and the success criterion are unchanged.
 - The bug-fix tasks and calibration logs stay in the repo as calibration history.
+
+## Amendment 2 (before any experiment runs)
+
+**Date:** Oct 29, 2026
+
+- Calibration probes showed near-deterministic outcomes per task (only 2 mixed tasks across all rounds), so selection among attempts is likely underpowered. They also showed lucky passes (attempts that pass all visible tests and fail hidden ones) in both implementation rounds. This amendment is informed by those calibration observations; no experiment data exists.
+- The primary question changes to detection: among attempts that pass all visible tests, do process-level trajectory scores separate lucky passes (fail at least one hidden test) from genuine passes (pass all hidden tests) better than a judge that sees only the final code?
+- Primary metric: AUROC of each scorer for flagging lucky passes, with bootstrap 95% intervals clustered by task. Scorers: the process judge (plan coherence, error recovery and tool precision, aggregated as their pre-specified mean), a final-code judge, and baselines (trajectory length in turns, final code length). Success criterion: the process judge's AUROC exceeds the final-code judge's, and its interval excludes 0.5. If not, this is reported plainly.
+- Secondary: the original selection analysis, reported as likely underpowered. Also reported: the lucky-pass rate by hidden-failure category (edge_val, edge_logic, random, large).
+- Task pool: the six active problems plus the four retired ones (text_justify, semver_match, tennis_score, nth_weekday_dates), reinstated because detection needs genuine passes too. 10 attempts per task with muse-spark-1.3 at reasoning_effort=minimal, using the agent loop.
+- Hidden tests are never shown to any scorer.
