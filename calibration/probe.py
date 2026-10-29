@@ -1,8 +1,12 @@
-"""Calibration probe: single-shot fix attempts with muse-spark-1.3 on the generated tasks.
+"""Calibration probe: single-shot fix attempts on the generated tasks.
 
 Calibration only, not experiment data.
-Usage: python -m calibration.probe [--attempts 3] [--effort minimal|low|medium|high|xhigh|max]
-Without --effort the model default is used and the log is probe.jsonl; with it, probe_effort_<level>.jsonl.
+Usage: python -m calibration.probe [--attempts 3] [--provider meta-api|local-llama] [--base-url URL] [--effort LEVEL]
+
+meta-api (muse-spark-1.3): --effort is sent as top-level reasoning_effort (minimal, low, medium, high, xhigh, max).
+  Logs to probe.jsonl without --effort, otherwise probe_effort_<level>.jsonl.
+local-llama (Muse Glimmer 30B on llama-server): --effort is sent as chat_template_kwargs.reasoning_strength
+  (low, medium, high, xhigh). Logs to probe_glimmer_<level>.jsonl.
 """
 
 import argparse
@@ -18,8 +22,12 @@ from pathlib import Path
 from tasks.gen.mutate import mutate
 from tasks.gen.runner import flag_suspicious, run_hidden, run_tests, run_visible
 
-BASE_URL = "https://api.meta.ai/v1"
-MODEL = "muse-spark-1.3"
+PROVIDERS = {
+    "meta-api": {"base_url": "https://api.meta.ai/v1", "model": "muse-spark-1.3", "timeout": 300,
+                 "efforts": ["minimal", "low", "medium", "high", "xhigh", "max"]},
+    "local-llama": {"base_url": "http://127.0.0.1:8080/v1", "model": "muse-glimmer-30b", "timeout": 1800,
+                    "efforts": ["low", "medium", "high", "xhigh"]},
+}
 TASK_DIR = Path("tasks/generated")
 SOLUTION_DIR = Path("tasks/_solutions")
 LOG_DIR = Path("results/calibration")
@@ -47,23 +55,27 @@ def load_env(path=".env"):
             os.environ.setdefault(key.strip(), value.strip().strip("\"'"))
 
 
-def chat(prompt, effort=None):
-    """One chat call. Returns (reply text, usage dict, latency seconds).
+def chat(prompt, provider, base_url, effort=None):
+    """One chat call. Returns (reply text, usage dict, llama-server timings dict, latency seconds).
 
-    effort is sent as top-level reasoning_effort; None leaves the model default.
+    The effort parameter is provider-specific: top-level reasoning_effort on meta-api,
+    chat_template_kwargs.reasoning_strength on local-llama. None leaves the model default.
     """
-    payload = {"model": MODEL, "messages": [{"role": "user", "content": prompt}]}
-    if effort:
-        payload["reasoning_effort"] = effort
-    request = urllib.request.Request(
-        f"{BASE_URL}/chat/completions",
-        data=json.dumps(payload).encode(),
-        headers={"Authorization": f"Bearer {os.environ['MODEL_API_KEY']}", "Content-Type": "application/json"},
-    )
+    config = PROVIDERS[provider]
+    payload = {"model": config["model"], "messages": [{"role": "user", "content": prompt}]}
+    headers = {"Content-Type": "application/json"}
+    if provider == "meta-api":
+        headers["Authorization"] = f"Bearer {os.environ['MODEL_API_KEY']}"
+        if effort:
+            payload["reasoning_effort"] = effort
+    elif effort:
+        payload["chat_template_kwargs"] = {"reasoning_strength": effort}
+    request = urllib.request.Request(f"{base_url}/chat/completions", data=json.dumps(payload).encode(), headers=headers)
     start = time.perf_counter()
-    with urllib.request.urlopen(request, timeout=300) as response:
+    with urllib.request.urlopen(request, timeout=config["timeout"]) as response:
         body = json.load(response)
-    return body["choices"][0]["message"]["content"] or "", body.get("usage") or {}, time.perf_counter() - start
+    reply = body["choices"][0]["message"]["content"] or ""
+    return reply, body.get("usage") or {}, body.get("timings") or {}, time.perf_counter() - start
 
 
 def token_counts(usage):
@@ -90,13 +102,15 @@ def fixed_only_exposed(task_dir, task, hidden_failing):
     return sorted(alone["failing"]) == sorted(hidden_failing)
 
 
-def attempt(task_dir, task, number, effort=None):
+def attempt(task_dir, task, number, provider, base_url, effort=None):
     buggy = (task_dir / f"{task['module']}.py").read_text()
     visible_output = run_visible(task_dir, buggy)["output"]
     record = {"timestamp": datetime.now(timezone.utc).isoformat(), "task_id": task["task_id"],
-              "attempt": number, "model": MODEL, "reasoning_effort": effort}
+              "attempt": number, "provider": provider, "model": PROVIDERS[provider]["model"],
+              "reasoning_effort": effort}
     try:
-        reply, usage, latency = chat(PROMPT.format(module=task["module"], source=buggy, output=visible_output), effort)
+        prompt = PROMPT.format(module=task["module"], source=buggy, output=visible_output)
+        reply, usage, timings, latency = chat(prompt, provider, base_url, effort)
     except (urllib.error.URLError, TimeoutError) as err:
         return {**record, "error": f"api: {getattr(err, 'code', '')} {err}"[:300]}
     fixed = extract_code(reply)
@@ -107,20 +121,31 @@ def attempt(task_dir, task, number, effort=None):
         "hidden_failed": hidden["failed"], "hidden_failing": hidden["failing"],
         "suspicious": flag_suspicious(fixed), "changed_source": fixed.strip() != buggy.strip(),
         **token_counts(usage), "usage_keys": sorted(usage), "latency_seconds": round(latency, 2),
+        "output_tokens_per_second": round((usage.get("completion_tokens") or 0) / latency, 1),
+        "decode_tokens_per_second": round(timings["predicted_per_second"], 1) if timings else None,
     })
     if not record["hidden_pass"]:
         record["fixed_only_exposed_bug"] = fixed_only_exposed(task_dir, task, hidden["failing"])
     return record
 
 
-def main(attempts, effort):
-    load_env()
+def log_name(provider, effort):
+    if provider == "local-llama":
+        return f"probe_glimmer_{effort or 'default'}.jsonl"
+    return f"probe_effort_{effort}.jsonl" if effort else "probe.jsonl"
+
+
+def main(attempts, provider, base_url, effort):
+    if effort and effort not in PROVIDERS[provider]["efforts"]:
+        raise SystemExit(f"--effort {effort} is not valid for {provider}: {PROVIDERS[provider]['efforts']}")
+    if provider == "meta-api":
+        load_env()
     LOG_DIR.mkdir(parents=True, exist_ok=True)
-    log_path = LOG_DIR / (f"probe_effort_{effort}.jsonl" if effort else "probe.jsonl")
+    log_path = LOG_DIR / log_name(provider, effort)
     for task_dir in sorted(p for p in TASK_DIR.iterdir() if p.is_dir()):
         task = json.loads((task_dir / "task.json").read_text())
         for number in range(1, attempts + 1):
-            record = attempt(task_dir, task, number, effort)
+            record = attempt(task_dir, task, number, provider, base_url, effort)
             with log_path.open("a") as log:
                 log.write(json.dumps(record) + "\n")
             print(f"{record['task_id']} #{number}: hidden_pass={record.get('hidden_pass')} "
@@ -131,6 +156,8 @@ def main(attempts, effort):
 if __name__ == "__main__":
     parser = argparse.ArgumentParser()
     parser.add_argument("--attempts", type=int, default=3)
+    parser.add_argument("--provider", choices=sorted(PROVIDERS), default="meta-api")
+    parser.add_argument("--base-url", help="defaults to the provider's URL")
     parser.add_argument("--effort", choices=["minimal", "low", "medium", "high", "xhigh", "max"])
     args = parser.parse_args()
-    main(args.attempts, args.effort)
+    main(args.attempts, args.provider, args.base_url or PROVIDERS[args.provider]["base_url"], args.effort)

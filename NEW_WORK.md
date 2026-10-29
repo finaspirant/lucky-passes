@@ -16,6 +16,7 @@ Creates self-generated bug-fix tasks for the experiment.
 - Oct 28, 2026: AST mutation engine (seeded, reproducible from keys), validator, and first 9 tasks from the 3 bases; review fixes recorded in DESIGN.md "Design decisions".
 - Oct 28, 2026 (calibration only, not experiment data): single-shot probe, muse-spark-1.3, 9 tasks x 3 attempts; 27/27 passed hidden tests.
 - Oct 28, 2026 (calibration only, not experiment data): reasoning-effort discovery, then probes at minimal and low effort; both 27/27, so no setting meets the preregistered 30-80% rule.
+- Oct 28, 2026 (calibration only, not experiment data): local Muse Glimmer 30B (Q4_K_XL, llama-server) smoke test, then single-shot probe at low reasoning strength; 27/27.
 
 ## Agent loop
 

@@ -45,6 +45,9 @@ def main(log_path):
     n = len(scored) or 1
     print(f"avg per attempt: input {total('input_tokens') / n:.0f}, output {total('output_tokens') / n:.0f}, "
           f"reasoning {total('reasoning_tokens') / n:.0f}")
+    print(f"avg time per attempt: {total('latency_seconds') / n:.1f}s; "
+          f"avg output tok/s {total('output_tokens_per_second') / n:.1f}; "
+          f"avg decode tok/s {total('decode_tokens_per_second') / n:.1f} (0 if not reported)")
     print(f"suspicious attempts: {[(r['task_id'], r['attempt'], r['suspicious']) for r in scored if r['suspicious']]}")
     print(f"unchanged source: {sum(not r['changed_source'] for r in scored)}")
     print(f"usage keys seen: {sorted({k for r in scored for k in r['usage_keys']})}")

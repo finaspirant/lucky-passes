@@ -73,4 +73,16 @@ These are enforced when the agent loop is built.
 
 **Oct 28, 2026** (reasoning effort)
 
-- The agent loop will use Chat Completions with top-level `reasoning_effort`, matching calibration. The `reasoning: {"effort": ...}` object is rejected on Chat Completions; see `calibration/effort_discovery.jsonl`.
+- The agent loop will use Chat Completions with top-level `reasoning_effort`, matching calibration. The `reasoning: {"effort": ...}` object is rejected on Chat Completions; see `calibration/effort_discovery.jsonl`. (Updated below: this applies to the meta-api provider only.)
+
+**Oct 28, 2026** (local model: Muse Glimmer 30B)
+
+- Model file: `Muse-Glimmer-30B-KQuant-Dynamic-Q4_K_XL.gguf` from Meta's `meta-models/Muse-Glimmer-30B-GGUF` (19,653,960,832 bytes), stored in `~/models/muse-glimmer`, outside the repo.
+- Quant: Meta's dynamic Q4_K_XL. Text only (no vision projector) and no DFlash drafter.
+- Runtime: llama.cpp `llama-server` 0.8.0 (build 11960, commit 8642541b2) from Homebrew, Metal, on an Apple M4 Pro with 48 GB.
+- Serve flags: `-ngl 99 -c 65536 -np 1 --cache-reuse 256 --jinja`. `--jinja` uses the chat template embedded in the GGUF; llama.cpp picks the ATEM tool-call parser from it, so no template file is passed.
+- Sampling: Meta's defaults, temperature 1.0, top_p 0.95, top_k 64.
+- Context length: 65,536 tokens in a single slot.
+- Reasoning strength: `low`, set server-wide with `--chat-template-kwargs '{"reasoning_strength":"low"}'` and per request by the probe. Reasoning cannot be turned off, and there is no `minimal` level.
+- The effort parameter is provider-specific. On meta-api it is top-level `reasoning_effort`. On local-llama it is `chat_template_kwargs.reasoning_strength`, because llama.cpp does not implement `reasoning_effort`. `calibration/probe.py --provider` does the mapping.
+- Smoke test (`calibration/local_smoke.py`, log `results/calibration/glimmer_smoke.jsonl`): a structured `tool_calls` entry with `finish_reason: "tool_calls"`, and reasoning in `reasoning_content`, not `content`.
