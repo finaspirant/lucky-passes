@@ -23,6 +23,7 @@ Creates self-generated bug-fix tasks for the experiment.
 - Oct 29, 2026 (calibration only, not experiment data): Probe impl-1: 16/18, above band; replacing text_justify, semver_match, tennis_score, nth_weekday_dates with harder problems.
 - Oct 29, 2026: four replacement problems (cron_next, expr_eval, lfu_cache, sliding_median); retired generated tasks moved to tasks/retired_impl. glob_match and token_bucket docstrings now state their scale requirements, to match the new rule that every tested scale is stated.
 - Oct 29, 2026 (calibration only, not experiment data): Probe impl-2, muse-spark-1.3 at minimal, 6 tasks x 3 attempts: 15/18 passed hidden tests (83%), 0 mixed tasks (cron_next 0/3, the rest 3/3), so the 30-80% rule is not met. All three cron_next failures raise OverflowError instead of ValueError at the end of year 9999.
+- Oct 29, 2026: calibration stopped; preregistration amendment 2 (detection of lucky passes as the primary question); the four retired problems reinstated, giving a 10-task pool.
 
 ## Agent loop
 

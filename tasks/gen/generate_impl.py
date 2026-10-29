@@ -22,11 +22,10 @@ from tasks.gen.runner import run_tests
 
 IMPL_DIR = Path("tasks/_impl")
 OUT_DIR = Path("tasks/generated_impl")
-# Active problems and their random-case seeds. Seeds are fixed per problem so that
-# replacing a problem never changes another problem's cases. Retired problems
-# (text_justify 3000, semver_match 3001, tennis_score 3003, nth_weekday_dates 3004)
-# stay in tasks/_impl; their generated tasks are in tasks/retired_impl.
-PROBLEMS = {"glob_match": 3002, "token_bucket": 3005, "cron_next": 3006, "expr_eval": 3007,
+# Problems and their random-case seeds. Seeds are fixed per problem so that adding or
+# removing a problem never changes another problem's cases.
+PROBLEMS = {"text_justify": 3000, "semver_match": 3001, "glob_match": 3002, "tennis_score": 3003,
+            "nth_weekday_dates": 3004, "token_bucket": 3005, "cron_next": 3006, "expr_eval": 3007,
             "lfu_cache": 3008, "sliding_median": 3009}
 CASE_TIME_LIMIT = 3
 FILE_TIMEOUT = 300
