@@ -62,3 +62,14 @@ This file is committed before results and must not be edited after results come 
 **Date:** Oct 28, 2026
 
 - Note: entries in this section precede all experiment results. The Oct 28 entry follows calibration probe 1, which used only the 9 calibration tasks and is not experiment data.
+
+## Amendment (before any experiment results)
+
+**Date:** Oct 29, 2026
+
+- Calibration showed a ceiling on the bug-fix tasks: 27/27 single-shot hidden passes for muse-spark-1.3 at default, low and minimal effort, and for Muse Glimmer 30B at low. Likely cause: short, fully specified modules can be re-derived from the docstring, which removes every bug at once.
+- The task type changes to implementation tasks: implement one function from a precise docstring spec. Visible tests: 3-5 small examples. Hidden tests: edge cases, seeded random inputs whose expected outputs come from a reference solution, and, where meaningful, large inputs with a generous time limit.
+- Agent under test: muse-spark-1.3 at reasoning_effort=minimal.
+- The same calibration rule applies: the task set is usable if the single-shot hidden pass rate is 30-80% with several mixed tasks. If not, problems may be replaced with harder or easier ones and reprobed, before any experiment runs.
+- Selectors, metric, process dimensions, statistics and the success criterion are unchanged.
+- The bug-fix tasks and calibration logs stay in the repo as calibration history.
