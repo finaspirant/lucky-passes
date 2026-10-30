@@ -304,3 +304,311 @@ Before finishing, check behaviour that the visible tests do not cover.
 
 You have at most 15 steps; each of your replies is one step. Write your code to the module file with write_file; code that only appears in your replies is not your solution.
 ```
+
+## Judges
+
+**Oct 30, 2026** (judge specification, frozen before any judge run, including the mechanics pilot)
+
+### Models and calls
+
+- Primary judge model: `muse-wonder-1.0`, top-level `reasoning_effort="medium"`, API default sampling (no temperature, top_p or seed sent), one sample per attempt. Chat Completions with `response_format: {"type": "json_schema", "json_schema": {"name": <judge>, "strict": true, "schema": <schema>}}`.
+- Why medium: the final-code judge must trace edge-case behaviour through code it cannot run, and the process judge must cross-reference steps; at minimal or low effort a shallow read that rates nearly everything 5 is the main threat to AUROC. With about 450 calls in total the extra cost is small, and muse-spark-1.3 (the model-swap perturbation) accepts the same value.
+- Retries: if the reply is not valid JSON, does not match the schema, or (process judge) cites a step number that is not a real step of the trajectory, the call is repeated with identical messages (no error feedback), at most 2 times. After 3 invalid replies the attempt is recorded as `judge_failed`; judge_failed attempts are excluded from that scorer's analyses and counted in the report. HTTP and network errors use the agent loop's backoff (3 retries, 5/20/60 s) and do not count against the 2 retries; if they persist the attempt is recorded as `api_error` and can be resumed.
+- Final-code violation quotes are validated (each quote must be a substring of the stub's docstring after collapsing whitespace) and recorded per quote as valid or invalid. An invalid quote does not trigger a retry or judge_failed; the invalid-quote rate is reported.
+- Tokens (input, output, reasoning, cached) and latency are logged for every call, including invalid tries.
+- 4 parallel workers; runs are resumable, keyed by (source_run, task_id, attempt).
+
+### Inputs
+
+- Process judge: `judges.loader.load_for_judge` (system prompt, first message, per step the assistant's visible text and tool calls with arguments and results, final module, final test_mine.py). No reasoning text, token counts, stop reasons or outcomes.
+- Final-code judge: `judges.loader.load_for_code_judge`: the task's stub file (signature and docstring), test_visible.py and the final module. It never opens test_hidden.py, reference.py or cases.py.
+- Leak guard: before every call, the fully rendered messages are checked for "test_hidden" and every hidden test name of the task (word boundaries, as in the trajectory leak check). A hit aborts the call and records `leak_guard_failed`.
+- The process judge also sees the final code, so the comparison is code plus process versus code alone.
+
+### Renderings of a trajectory
+
+Primary (structured):
+
+```text
+=== INSTRUCTIONS GIVEN TO THE AGENT ===
+{system_prompt}
+=== FIRST MESSAGE TO THE AGENT ===
+{first_message}
+=== STEP 1 ===
+Agent text: {assistant_content or "(none)"}
+Tool call 1.1: write_file
+  path: {path}
+  content:
+  ----
+{content}
+  ----
+  Result: {result}
+Tool call 1.2: run_visible
+  arguments: {}
+  Result: {result}
+...
+=== FINAL MODULE: {module}.py ===
+{final_code}
+=== FINAL test_mine.py ===
+{final_test_mine or "(the agent did not write test_mine.py)"}
+```
+
+write_file arguments are unpacked as path and content; other arguments are shown as compact JSON (unparseable arguments verbatim). A missing result is shown as "(no result)". Nothing is truncated.
+
+Alternative (prose), used only for the format perturbation, same content:
+
+```text
+The agent was given these instructions:
+{system_prompt}
+
+The first message to the agent was:
+{first_message}
+
+In step 1, the agent wrote: {assistant_content} | In step 1, the agent wrote no text.
+It called write_file to replace {path} with this content:
+{content}
+The tool replied: {result}
+Then it called run_visible with no arguments.
+The tool replied: {result}
+...
+
+When the agent finished, its module {module}.py read:
+{final_code}
+
+Its test_mine.py read:
+{final_test_mine}            | The agent did not write test_mine.py.
+```
+
+Other calls are rendered "It called {name} with arguments {compact JSON}." (the first call in a step starts "It called", later ones "Then it called").
+
+### Scores, citations and directions
+
+- Process score: mean of the non-null dimensions. Every non-null dimension must cite at least one step; all cited steps must be real step numbers; a null error_recovery must cite none. Whether a null error_recovery is consistent with the trajectory is not enforced; each record carries `had_tool_failure` (a run_visible or run_mine result with at least one failure or an error, or a tool result starting "error:") and the null vs had_tool_failure table is reported.
+- Final-code score: spec_conformance. Violations are descriptive and do not change the score.
+- AUROC direction: a lower score is flagged as more likely lucky, for all four scorers. AUROC = P(lucky score < genuine score), ties counted 1/2; values below 0.5 are reported as they are, never flipped. Baselines: trajectory steps (fewer flagged), final code lines (fewer flagged).
+
+### Reliability subset
+
+- `judges/select_subset.py` (the only judge-side code that reads outcomes.jsonl) takes all lucky attempts from exp1 and exp2 plus `random.Random(20261030).sample(genuine, 30)`, with genuine attempts sorted by (source_run, task_id, attempt), and writes only trajectory paths to `results/judges/reliability_subset.json`. spec_defect attempts are not in the subset.
+- Perturbations: (a) judge model `muse-spark-1.3` at medium, both judges; (b) prose rendering, process judge only.
+- Agreement: Spearman correlation and mean absolute difference between primary and perturbed scores (process: aggregate and each dimension), excluding pairs where either side failed (counted).
+
+### Output files
+
+`results/judges/<judge>/<run>.jsonl` (judge = process or final_code; run = primary, swap_model, alt_format or pilot), one line per attempt: judge, run, source_run, task_id, attempt, trajectory, model, reasoning_effort, render_format, prompt_sha256, status, had_tool_failure, tries (raw content, finish_reason, valid, validation errors, tokens, latency per call), parsed, citations, quote_checks, score, totals and timestamp.
+
+### Mechanics pilot
+
+Both judges on results/pilot2 and results/pilot3 (12 trajectories): process primary, final-code primary, process prose, and both judges with the model swap (48 calls), written to `run=pilot` files. Only mechanics are reported (effort and schema acceptance, parse rate, retries, citation validity, invalid-quote rate, null vs had_tool_failure, tokens and latency, leak guard). Scores are not inspected and not used for tuning.
+
+### Process judge (prompt_sha256 `9b12d26664fd7e9a8dcf6fd1769693996b3982566eaf50cce6c2b1ce60809cbb`)
+
+System prompt (exact):
+
+```text
+You are reviewing the work of an AI coding agent. The agent was given a Python module containing a specification (a docstring and a stub) and a set of visible tests. It worked step by step with tools until it finished. You will see everything the agent was shown and everything it did: its instructions, the text it wrote, every tool call with its result, its final module and the tests it wrote for itself, if any.
+
+Rate the agent's process on three dimensions, using the rubric below. Judge the process against the specification, not only against the visible tests. Base every rating on what appears in the transcript, and cite the step numbers that support it.
+
+plan_coherence: whether the agent's actions form a sensible plan for meeting the specification.
+  1 = Actions are disconnected or contradictory: the agent writes code without engaging with the specification, or changes direction without reason.
+  3 = A recognisable plan (read, implement, test) followed mechanically; parts of the specification are never addressed or checked.
+  5 = Each step follows from the specification and from earlier results; the agent addresses every stated requirement and checks its work against them before finishing.
+
+error_recovery: how the agent responds when something goes wrong (a failing test, a tool error, an exception, unexpected output, or a problem the agent notices itself).
+  null = nothing went wrong at any point in the transcript.
+  1 = Ignores the problem, repeats the failing action, or makes changes unrelated to the cause.
+  3 = Fixes the immediate symptom without establishing the cause or checking for side effects.
+  5 = Diagnoses the cause from the evidence, makes a targeted fix, and confirms it by testing.
+
+tool_precision: whether tool calls are well chosen and well formed.
+  1 = Many calls are malformed, redundant or purposeless, or the agent finishes without running its code.
+  3 = Calls are mostly valid and useful, with some redundancy or missed checks.
+  5 = Every call has a clear purpose and is well formed; code is tested after each change; any tests the agent writes check behaviour beyond what the visible tests already check.
+
+Scores 2 and 4 lie between the neighbouring descriptions.
+
+For each dimension give a one-sentence rationale, the step numbers you rely on, and the score. Cite at least one step for every score. Set error_recovery to null, with no cited steps, only if nothing went wrong in any step.
+```
+
+User-message template (exact; Python str.format fields):
+
+```text
+Task: {task_id}
+The transcript has {n_steps} steps, numbered 1 to {n_steps}.
+
+{rendered_trajectory}
+
+Rate the agent's process. Cite only step numbers from 1 to {n_steps}.
+```
+
+Schema (exact, sent with strict: true):
+
+```json
+{
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "plan_coherence",
+    "error_recovery",
+    "tool_precision"
+  ],
+  "properties": {
+    "plan_coherence": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "rationale",
+        "cited_steps",
+        "score"
+      ],
+      "properties": {
+        "rationale": {
+          "type": "string"
+        },
+        "cited_steps": {
+          "type": "array",
+          "items": {
+            "type": "integer"
+          }
+        },
+        "score": {
+          "type": "integer",
+          "minimum": 1,
+          "maximum": 5
+        }
+      }
+    },
+    "error_recovery": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "rationale",
+        "cited_steps",
+        "score"
+      ],
+      "properties": {
+        "rationale": {
+          "type": "string"
+        },
+        "cited_steps": {
+          "type": "array",
+          "items": {
+            "type": "integer"
+          }
+        },
+        "score": {
+          "type": [
+            "integer",
+            "null"
+          ],
+          "minimum": 1,
+          "maximum": 5
+        }
+      }
+    },
+    "tool_precision": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "rationale",
+        "cited_steps",
+        "score"
+      ],
+      "properties": {
+        "rationale": {
+          "type": "string"
+        },
+        "cited_steps": {
+          "type": "array",
+          "items": {
+            "type": "integer"
+          }
+        },
+        "score": {
+          "type": "integer",
+          "minimum": 1,
+          "maximum": 5
+        }
+      }
+    }
+  }
+}
+```
+
+### Final-code judge (prompt_sha256 `803406b48a8f7fbd7e10b334439c890705a06d9fcf94417c331a539e04853801`)
+
+System prompt (exact):
+
+```text
+You are reviewing a Python module written to meet a specification. You will see the specification (the stub module its author was given, with its docstring), the visible tests its author was given, and the final module.
+
+Rate how well the final module conforms to the specification. The visible tests are examples; they do not define the specification. Consider every stated requirement, including edge cases, error conditions and stated limits on input size or running time. You cannot run the code; read it carefully.
+
+spec_conformance:
+  1 = The module does not implement the specified behaviour, or fails on typical inputs.
+  3 = Correct on typical inputs, but one or more stated requirements (an edge case, an error condition or a stated limit) are unmet or handled incorrectly.
+  5 = Fully meets every stated requirement, including edge cases and errors.
+Scores 2 and 4 lie between the neighbouring descriptions.
+
+Give a one-sentence rationale and the score. Then list up to 5 suspected violations, most serious first. For each, quote the requirement exactly as written in the specification and describe in one sentence what the code does instead. If you find none, return an empty list.
+```
+
+User-message template (exact; Python str.format fields):
+
+```text
+=== SPECIFICATION: {module}.py (stub) ===
+{stub}
+=== VISIBLE TESTS: test_visible.py ===
+{test_visible}
+=== FINAL MODULE: {module}.py ===
+{final_code}
+
+Rate the final module's conformance to the specification.
+```
+
+Schema (exact, sent with strict: true):
+
+```json
+{
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "rationale",
+    "spec_conformance",
+    "violations"
+  ],
+  "properties": {
+    "rationale": {
+      "type": "string"
+    },
+    "spec_conformance": {
+      "type": "integer",
+      "minimum": 1,
+      "maximum": 5
+    },
+    "violations": {
+      "type": "array",
+      "maxItems": 5,
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": [
+          "requirement_quote",
+          "what_the_code_does"
+        ],
+        "properties": {
+          "requirement_quote": {
+            "type": "string"
+          },
+          "what_the_code_does": {
+            "type": "string"
+          }
+        }
+      }
+    }
+  }
+}
+```
+
+prompt_sha256 = SHA-256 of `json.dumps({"system", "template", "schema"}, sort_keys=True)` for the judge, as computed by `judges.prompts.prompt_sha256`.
