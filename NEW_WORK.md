@@ -32,6 +32,8 @@ Runs the coding agent for repeated attempts on each task.
 - Oct 29, 2026: agent loop (read_file, write_file, run_visible, finish; stopping rules; step-level JSONL logging; parallel isolated attempts) with tests; exact prompts, schemas and limits recorded in DESIGN.md before any run.
 - Oct 29, 2026: scoring step (fresh visible and hidden runs on each final code, outcomes.jsonl with lucky/genuine/visible_fail labels and hidden failures by category), leak check ("test_hidden" or any hidden test name in a trajectory), and judge loader (strips reasoning, reads only trajectory files), with tests.
 - Oct 29, 2026 (pilot, excluded from analysis): results/pilot, text_justify_01 and cron_next_01 x 2 attempts, muse-spark-1.3 at minimal. All 4 finished in 4 steps; text_justify 2/2 genuine, cron_next 1 genuine and 1 lucky (fails test_edge_logic_past_end_of_calendar and test_large_search_stops_at_9999); leak check passed. One extra API call to inspect response fields (1039 in, 123 out, 4 reasoning tokens): no reasoning text field is returned.
+- Oct 29, 2026: agent loop change from pilot 1: write_file may also write test_mine.py, new run_mine tool, one neutral system-prompt line, flag_suspicious on test_mine.py recorded in outcomes, cached tokens logged per step; recorded in DESIGN.md before pilot 2.
+- Oct 29, 2026 (pilot 2, excluded from analysis): results/pilot2, text_justify_01, cron_next_01 and glob_match_01 x 2 attempts. All 6 finished; 1 of 6 wrote and ran test_mine.py (glob_match #2, 11 steps, first run_mine had no test functions). text_justify 2/2 and glob_match 2/2 genuine, cron_next 2/2 lucky (same end-of-calendar failures); leak check passed; no suspicious flags.
 
 ## Process judges
 

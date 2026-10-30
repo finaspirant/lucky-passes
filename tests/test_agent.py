@@ -226,3 +226,64 @@ def test_parallel_attempts_are_isolated_and_resumable(tmp_path):
     codes = {json.loads(p.read_text().splitlines()[-1])["final_code"] for p in (out / "trajectories").iterdir()}
     assert len(codes) == 6
     assert loop.run_many(["calc_01", "calc_02"], 3, out, model_call=model, task_root=root) == []
+
+
+# ---- test_mine.py and run_mine -------------------------------------------------------
+
+MINE = "from calc import double\n\ndef test_three():\n    assert double(3) == 6\n"
+
+
+def test_write_file_allows_test_mine(tmp_path):
+    ws = Workspace(make_task(tmp_path))
+    try:
+        assert ws.mine_source() is None and ws.module_state()["test_mine_sha256"] is None
+        assert ws.call("write_file", json.dumps({"path": "test_mine.py", "content": MINE})) == (
+            "ok", "wrote 4 lines to test_mine.py")
+        assert ws.mine_source() == MINE and ws.module_source() == STUB
+        assert ws.module_state()["test_mine_lines"] == 4
+        assert ws.call("read_file", json.dumps({"path": "test_mine.py"}))[1].startswith("test_mine.py: lines 1-4 of 4")
+        for other in ("test_hidden.py", "test_mine2.py", "test_visible.py"):
+            assert ws.call("write_file", json.dumps({"path": other, "content": MINE}))[0] == "error"
+            assert not (ws.root / other).exists() or other == "test_visible.py"
+    finally:
+        ws.close()
+
+
+def test_run_mine_runs_the_workspace_file(tmp_path):
+    ws = Workspace(make_task(tmp_path))
+    try:
+        ws.call("write_file", json.dumps({"path": "test_mine.py", "content": MINE}))
+        status, text = ws.call("run_mine", "{}")
+        assert status == "ok" and text.startswith("0 passed, 1 failed") and "test_three" in text
+        ws.call("write_file", json.dumps({"path": "calc.py", "content": GOOD}))
+        assert ws.call("run_mine", "")[1].startswith("1 passed, 0 failed")
+        assert ws.call("run_mine", json.dumps({"x": 1}))[0] == "error"
+    finally:
+        ws.close()
+
+
+def test_run_mine_without_test_mine_is_an_error(tmp_path):
+    ws = Workspace(make_task(tmp_path))
+    try:
+        status, text = ws.call("run_mine", "{}")
+        assert status == "error" and "test_mine.py does not exist" in text
+    finally:
+        ws.close()
+
+
+@pytest.mark.parametrize("path", ["../test_mine.py", "/tmp/test_mine.py", "sub/test_mine.py", "a\\test_mine.py"])
+def test_test_mine_path_rules_unchanged(tmp_path, path):
+    ws = Workspace(make_task(tmp_path))
+    try:
+        assert ws.call("write_file", json.dumps({"path": path, "content": MINE}))[0] == "error"
+        assert ws.mine_source() is None
+    finally:
+        ws.close()
+
+
+def test_stop_line_records_test_mine_and_cached_tokens(tmp_path):
+    body = reply(call("write_file", {"path": "test_mine.py", "content": MINE}))
+    body["usage"]["prompt_tokens_details"] = {"cached_tokens": 64}
+    stop, records = run(tmp_path, Script(body, reply(call("finish"))))
+    assert stop["final_test_mine"] == MINE and records[1]["cached_tokens"] == 64
+    assert records[2]["cached_tokens"] is None

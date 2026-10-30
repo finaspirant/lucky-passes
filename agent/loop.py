@@ -40,8 +40,9 @@ you cannot see, so follow the specification exactly, not just the examples.
 
 Tools:
 - read_file(path, start_line, end_line): read a workspace file, optionally a range of lines.
-- write_file(path, content): replace the whole content of the module file. Only the module file can be written.
+- write_file(path, content): replace the whole content of the module file or test_mine.py. Only these two files can be written.
 - run_visible(): run test_visible.py against the current module and see the results.
+- run_mine(): run your own tests in test_mine.py, which you can write with write_file.
 - finish(message): call this when you are done. The module file as it is then is your solution.
 
 You have at most {max_steps} steps; each of your replies is one step. Write your code to the module \
@@ -122,6 +123,7 @@ def run_steps(workspace, messages, log, model_call, sleep):
             "assistant_content": message.get("content"),
             "reasoning": message.get("reasoning_content") or message.get("reasoning"),
             "tool_calls": results, **token_counts(body.get("usage") or {}),
+            "cached_tokens": ((body.get("usage") or {}).get("prompt_tokens_details") or {}).get("cached_tokens"),
             "latency_seconds": round(latency, 2), "api_retries": retries,
             "finish_reason": choice.get("finish_reason"), **workspace.module_state(),
         })
@@ -154,7 +156,7 @@ def run_attempt(task_dir, attempt, log_path, run_id, model_call=call_model, slee
             final_code = workspace.module_source()
             stop = {"type": "stop", "task_id": task_id, "attempt": attempt, "stop_reason": stop_reason,
                     "steps": steps, "error": error, "final_code": final_code,
-                    "final_code_lines": len(final_code.splitlines())}
+                    "final_code_lines": len(final_code.splitlines()), "final_test_mine": workspace.mine_source()}
             write_line(log, stop)
         return stop
     finally:

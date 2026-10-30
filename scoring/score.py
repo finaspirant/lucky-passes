@@ -18,7 +18,7 @@ from concurrent.futures import ThreadPoolExecutor
 from pathlib import Path
 
 from calibration.probe import failures_by_category
-from tasks.gen.runner import run_hidden, run_visible
+from tasks.gen.runner import flag_suspicious, run_hidden, run_visible
 
 TASK_DIR = Path("tasks/generated_impl")
 
@@ -59,6 +59,9 @@ def score_attempt(path, task_root=TASK_DIR):
         "hidden_pass": hidden_pass, "hidden_failing": hidden["failing"],
         "hidden_failed_by_category": failures_by_category(hidden["failing"]),
         "label": label(visible_pass, hidden_pass),
+        "suspicious_module": flag_suspicious(stop["final_code"]),
+        "suspicious_test_mine": None if stop.get("final_test_mine") is None
+        else flag_suspicious(stop["final_test_mine"]),
     }
 
 
