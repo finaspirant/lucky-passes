@@ -45,6 +45,8 @@ Tools:
 - run_mine(): run your own tests in test_mine.py, which you can write with write_file.
 - finish(message): call this when you are done. The module file as it is then is your solution.
 
+Before finishing, check behaviour that the visible tests do not cover.
+
 You have at most {max_steps} steps; each of your replies is one step. Write your code to the module \
 file with write_file; code that only appears in your replies is not your solution."""
 
