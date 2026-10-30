@@ -1,0 +1,24 @@
+{
+  "task_id": "merge_ranges_01",
+  "name": "merge_ranges",
+  "module": "merge_ranges",
+  "kind": "implement",
+  "seed": 3015,
+  "case_time_limit": 3,
+  "large_time_limit": null,
+  "test_timeout": 300,
+  "visible_cases": [
+    "overlapping",
+    "separate",
+    "unsorted",
+    "contained",
+    "reversed_range"
+  ],
+  "hidden_counts": {
+    "edge_val": 3,
+    "edge_logic": 12,
+    "random": 30,
+    "large": 0
+  },
+  "boundary_example_in_docstring": true
+}

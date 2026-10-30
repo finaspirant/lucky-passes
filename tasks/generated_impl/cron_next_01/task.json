@@ -19,5 +19,6 @@
     "edge_logic": 26,
     "random": 30,
     "large": 5
-  }
+  },
+  "boundary_example_in_docstring": false
 }

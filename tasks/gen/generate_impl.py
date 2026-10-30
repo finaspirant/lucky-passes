@@ -26,7 +26,8 @@ OUT_DIR = Path("tasks/generated_impl")
 # removing a problem never changes another problem's cases.
 PROBLEMS = {"text_justify": 3000, "semver_match": 3001, "glob_match": 3002, "tennis_score": 3003,
             "nth_weekday_dates": 3004, "token_bucket": 3005, "cron_next": 3006, "expr_eval": 3007,
-            "lfu_cache": 3008, "sliding_median": 3009}
+            "lfu_cache": 3008, "sliding_median": 3009, "business_days": 3010, "split_money": 3011,
+            "human_size": 3012, "flatten": 3013, "normalize_tags": 3014, "merge_ranges": 3015}
 CASE_TIME_LIMIT = 3
 FILE_TIMEOUT = 300
 
@@ -135,6 +136,7 @@ def build(name, seed):
                           "random": len(randoms), "large": len(large)},
         "large_time_limit": cases.LARGE_TIME_LIMIT,
         "test_timeout": FILE_TIMEOUT + len(large) * (cases.LARGE_TIME_LIMIT or 0),
+        "boundary_example_in_docstring": getattr(cases, "BOUNDARY_EXAMPLE_IN_DOCSTRING", None),
     }
 
 
@@ -151,6 +153,8 @@ def write_task(name, seed):
             "case_time_limit": CASE_TIME_LIMIT, "large_time_limit": built["large_time_limit"],
             "test_timeout": built["test_timeout"], "visible_cases": built["visible_cases"],
             "hidden_counts": built["hidden_counts"]}
+    if built["boundary_example_in_docstring"] is not None:
+        task["boundary_example_in_docstring"] = built["boundary_example_in_docstring"]
     (task_dir / "task.json").write_text(json.dumps(task, indent=2) + "\n")
     return task_dir
 

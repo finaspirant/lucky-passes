@@ -1,0 +1,24 @@
+{
+  "task_id": "normalize_tags_01",
+  "name": "normalize_tags",
+  "module": "normalize_tags",
+  "kind": "implement",
+  "seed": 3014,
+  "case_time_limit": 3,
+  "large_time_limit": null,
+  "test_timeout": 300,
+  "visible_cases": [
+    "sorted",
+    "duplicates",
+    "trim_and_drop_empty",
+    "keeps_first_spelling",
+    "not_a_list"
+  ],
+  "hidden_counts": {
+    "edge_val": 2,
+    "edge_logic": 12,
+    "random": 30,
+    "large": 0
+  },
+  "boundary_example_in_docstring": true
+}

@@ -1,0 +1,24 @@
+{
+  "task_id": "flatten_01",
+  "name": "flatten",
+  "module": "flatten",
+  "kind": "implement",
+  "seed": 3013,
+  "case_time_limit": 3,
+  "large_time_limit": 5,
+  "test_timeout": 325,
+  "visible_cases": [
+    "already_flat",
+    "one_level",
+    "mixed_depths",
+    "empty_lists",
+    "not_a_list"
+  ],
+  "hidden_counts": {
+    "edge_val": 2,
+    "edge_logic": 9,
+    "random": 30,
+    "large": 5
+  },
+  "boundary_example_in_docstring": false
+}

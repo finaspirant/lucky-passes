@@ -37,6 +37,7 @@ Runs the coding agent for repeated attempts on each task.
 - Oct 29, 2026: system prompt gains "Before finishing, check behaviour that the visible tests do not cover."; prompt frozen for the experiment run (commit f282355).
 - Oct 29, 2026 (pilot 3, safety check, excluded from analysis): results/pilot3, text_justify_01, cron_next_01 and lfu_cache_01 x 2 attempts with the frozen code. All 6 finished, no API errors or retries, leak check passed, no suspicious flags. 1 of 6 used run_mine (cron_next #2). text_justify 2/2 and lfu_cache 2/2 genuine, cron_next 2/2 lucky.
 - Oct 29, 2026 (experiment run exp1, frozen code f282355): results/runs/exp1, 10 tasks x 10 attempts, muse-spark-1.3 at minimal, 4 workers. 100/100 completed (98 finish, 2 step_limit), 0 API errors. Scored: 90 genuine, 10 lucky (all cron_next_01), 0 visible_fail. Leak check passed. Suspicious flags: 2 expr_eval_01 modules import sys to call sys.set_int_max_str_digits (both genuine). No judges run.
+- Oct 29, 2026: preregistration amendment 3; exp2 problems (business_days, split_money, human_size, flatten, normalize_tags, merge_ranges, seeds 3010-3015), each with one stated boundary requirement tested only by hidden edge_logic or large cases; task.json records boundary_example_in_docstring for these six and cron_next.
 
 ## Process judges
 

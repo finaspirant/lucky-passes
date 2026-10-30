@@ -1,0 +1,24 @@
+{
+  "task_id": "split_money_01",
+  "name": "split_money",
+  "module": "split_money",
+  "kind": "implement",
+  "seed": 3011,
+  "case_time_limit": 3,
+  "large_time_limit": null,
+  "test_timeout": 300,
+  "visible_cases": [
+    "even_split",
+    "remainder_to_first",
+    "weighted",
+    "largest_fraction_first",
+    "empty_weights"
+  ],
+  "hidden_counts": {
+    "edge_val": 3,
+    "edge_logic": 13,
+    "random": 30,
+    "large": 0
+  },
+  "boundary_example_in_docstring": true
+}

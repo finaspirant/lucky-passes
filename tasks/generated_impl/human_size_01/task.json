@@ -1,0 +1,24 @@
+{
+  "task_id": "human_size_01",
+  "name": "human_size",
+  "module": "human_size",
+  "kind": "implement",
+  "seed": 3012,
+  "case_time_limit": 3,
+  "large_time_limit": null,
+  "test_timeout": 300,
+  "visible_cases": [
+    "bytes",
+    "one_kib",
+    "one_and_half_kib",
+    "megabytes",
+    "negative"
+  ],
+  "hidden_counts": {
+    "edge_val": 3,
+    "edge_logic": 14,
+    "random": 30,
+    "large": 0
+  },
+  "boundary_example_in_docstring": true
+}

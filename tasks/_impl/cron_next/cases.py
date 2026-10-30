@@ -3,6 +3,8 @@ import datetime
 from tasks.gen.render import Raises
 
 FUNCTION = "cron_next"
+# Whether the docstring gives a worked example of the stated boundary requirement.
+BOUNDARY_EXAMPLE_IN_DOCSTRING = False
 EXTRA_PRELUDE = "import datetime\n\nDT = datetime.datetime\n"
 D = datetime.datetime
 

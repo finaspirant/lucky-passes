@@ -1,0 +1,24 @@
+{
+  "task_id": "business_days_01",
+  "name": "business_days",
+  "module": "business_days",
+  "kind": "implement",
+  "seed": 3010,
+  "case_time_limit": 3,
+  "large_time_limit": null,
+  "test_timeout": 300,
+  "visible_cases": [
+    "over_weekend",
+    "two_weeks",
+    "backwards",
+    "skips_holiday",
+    "start_is_datetime"
+  ],
+  "hidden_counts": {
+    "edge_val": 3,
+    "edge_logic": 19,
+    "random": 30,
+    "large": 0
+  },
+  "boundary_example_in_docstring": false
+}
