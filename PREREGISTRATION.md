@@ -84,3 +84,12 @@ This file is committed before results and must not be edited after results come 
 - Secondary: the original selection analysis, reported as likely underpowered. Also reported: the lucky-pass rate by hidden-failure category (edge_val, edge_logic, random, large).
 - Task pool: the six active problems plus the four retired ones (text_justify, semver_match, tennis_score, nth_weekday_dates), reinstated because detection needs genuine passes too. 10 attempts per task with muse-spark-1.3 at reasoning_effort=minimal, using the agent loop.
 - Hidden tests are never shown to any scorer.
+
+## Amendment 3 (before any judge runs)
+
+**Date:** Oct 29, 2026
+
+- exp1 (10 tasks x 10 attempts) produced 10 lucky passes, all in one task (cron_next), and 90 genuine passes in the other nine tasks. With one positive task, AUROC cannot separate detection of flaws from task identity. This amendment follows exp1 outcomes; no judge has been run.
+- exp2 adds about 6 new tasks designed so that each docstring states one boundary requirement that visible tests do not exercise. Same agent, frozen prompt, 10 attempts per task.
+- Analyses are reported for exp1, exp2 and combined. The primary metric and success criterion from Amendment 2 apply to the combined set; clustered bootstrap by task.
+- Pre-specified secondary analyses: (a) per-task judge flag rates for lucky vs genuine attempts; (b) the correlated-failure analysis: for tasks where all attempts share the same hidden failure, best-of-10 selection by any scorer cannot improve hidden pass rate, and we report this.
