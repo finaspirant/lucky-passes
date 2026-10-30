@@ -45,6 +45,10 @@ Runs the coding agent for repeated attempts on each task.
 
 Scores agent trajectories on process dimensions.
 
+- Oct 30, 2026: judge specification frozen before any judge run (commit 27781ba): prompts, templates, schemas, renderings and prompt_sha256 in DESIGN.md; "Judge specification" section in PREREGISTRATION.md.
+- Oct 30, 2026: judges implemented: loader additions (final_test_mine, load_for_code_judge), structured and prose renderings, validation and retries, leak guard on rendered prompts, per-call token logging, reliability-subset selection script, mechanics summary, with tests.
+- Oct 30, 2026 (mechanics pilot, excluded from analysis; scores not inspected): results/judges/*/pilot.jsonl, pilot2 and pilot3 trajectories (12) x 4 process/final-code conditions = 48 calls. 48/48 valid on the first call, no retries, no judge_failed, no API errors, no leak-guard hits, no invalid citations, 0 of 9 quotes invalid. muse-wonder-1.0 accepted reasoning_effort=medium and the strict schemas. No mechanics fix needed.
+
 ## Selectors
 
 Chooses one attempt per task using the preregistered selection methods.

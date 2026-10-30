@@ -90,7 +90,8 @@ def test_judge_view_strips_reasoning(tmp_path):
     assert "SECRET-REASONING" in path.read_text()  # logged in the trajectory ...
     view = load_for_judge(path)
     assert "SECRET-REASONING" not in json.dumps(view)  # ... but never shown to judges
-    assert set(view) == {"task_id", "attempt", "system_prompt", "first_message", "steps", "final_code"}
+    assert set(view) == {"task_id", "attempt", "system_prompt", "first_message", "steps", "final_code",
+                         "final_test_mine"}
     assert view["steps"][0] == {"step": 1, "assistant_content": "Writing it now.", "tool_calls": [
         {"name": "write_file", "arguments": json.dumps({"path": "calc.py", "content": GOOD}),
          "result": "wrote 2 lines to calc.py"}]}
