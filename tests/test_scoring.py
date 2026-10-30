@@ -137,3 +137,13 @@ def test_outcomes_flag_test_mine(tmp_path):
     loop.run_many(["good_01"], 1, out, workers=1, model_call=model, sleep=lambda s: None, task_root=root)
     outcome = score_run(out, task_root=root)[0][0]
     assert outcome["suspicious_module"] == [] and outcome["suspicious_test_mine"] == ["line 1: import subprocess"]
+
+
+def test_spec_defect_label():
+    from scoring.score import final_label
+    defects = {"t_01": {"test_edge_logic_bad"}}
+    assert final_label("t_01", "lucky", ["test_edge_logic_bad"], defects) == "spec_defect"
+    assert final_label("t_01", "lucky", ["test_edge_logic_bad", "test_random_01"], defects) == "lucky"
+    assert final_label("t_01", "genuine", [], defects) == "genuine"
+    assert final_label("t_01", "visible_fail", ["test_edge_logic_bad"], defects) == "visible_fail"
+    assert final_label("u_01", "lucky", ["test_edge_logic_bad"], defects) == "lucky"

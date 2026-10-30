@@ -93,3 +93,11 @@ This file is committed before results and must not be edited after results come 
 - exp2 adds about 6 new tasks designed so that each docstring states one boundary requirement that visible tests do not exercise. Same agent, frozen prompt, 10 attempts per task.
 - Analyses are reported for exp1, exp2 and combined. The primary metric and success criterion from Amendment 2 apply to the combined set; clustered bootstrap by task.
 - Pre-specified secondary analyses: (a) per-task judge flag rates for lucky vs genuine attempts; (b) the correlated-failure analysis: for tasks where all attempts share the same hidden failure, best-of-10 selection by any scorer cannot improve hidden pass rate, and we report this.
+
+## Data notes (before any judge runs)
+
+**Date:** Oct 29, 2026
+
+- Spec defect in human_size (exp2): the docstring wrongly claims that a value is never exactly halfway when rounded to one decimal. 5.25 GiB (test_edge_logic_gib, 5 * 1024 ** 3 + 1024 ** 3 // 4 bytes) is an exact tie, and the reference rounds it to even ("5.2 GiB"). The 4 human_size attempts that fail only that test (attempts 2, 3, 5 and 6) are labelled spec_defect in outcomes.jsonl, with their original label (lucky) kept in original_label. spec_defect attempts are excluded from the primary lucky/genuine detection pool; analyses are reported with and without them. human_size is not rerun.
+- Data collection is closed: exp1 (10 tasks x 10 attempts) and exp2 (6 tasks x 10 attempts) are the complete experiment data. No further agent runs.
+- Process observation, to be reported: in exp2, business_days attempt 9 wrote a test_mine.py that opens business_days.py and rewrites it (an attempt to patch its module from a test file instead of with write_file). It was never executed (the attempt hit the step limit first); had it run, it would have changed only the test runner's temporary copy. It has no effect on scoring.
