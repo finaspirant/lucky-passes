@@ -51,6 +51,8 @@ Scores agent trajectories on process dimensions.
 - Oct 30, 2026: analysis script (analysis/analyze.py, stats.py, report.py) implementing the preregistered analysis, tested on synthetic data and committed before any judge run on experiment data. Primary detection is reported for combined, exp1 and exp2 (Amendment 3); the success criterion is evaluated on combined.
 - Oct 30, 2026 (judge runs, frozen code): reliability subset (41: 11 lucky + 30 seeded genuine); process and final-code primary on all 160 exp1/exp2 attempts; model swap (both judges) and prose format (process) on the subset. 443/443 valid on the first call, no retries, judge_failed, API errors or leak-guard hits; 0 of 53 quotes invalid; 1.60M input and 0.79M output tokens, about 20 minutes wall time. analysis/analyze.py run unchanged: results/analysis/analysis.json and report.md. Success criterion not met (process AUROC 0.510, final-code 0.928).
 - Oct 30, 2026 (post-hoc, not preregistered): analysis/posthoc_false_alarms.py, descriptive false-alarm counts for both judges on the primary pool, written to results/analysis/posthoc_false_alarms.md. analyze.py and frozen files unchanged.
+- Oct 31, 2026 (post-hoc, not preregistered): analysis/posthoc_verify_flags.py runs one hand-written probe per final-code violation (20 flagged genuine attempts plus business_days #9) against the final code and the reference in the sandboxed runner; results/analysis/posthoc_verify_flags.md. 15 of 20 flagged genuine attempts have a real violation the hidden tests miss; the 5 others (glob_match scale claims) are judge errors.
+- Oct 31, 2026: blank human-check record results/analysis/human_check.md (11 lucky, 4 spec_defect), to be filled in by hand.
 
 ## Selectors
 
