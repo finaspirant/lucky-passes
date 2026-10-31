@@ -1,0 +1,458 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Lucky Passes Viewer</title>
+<style>
+:root {
+  --bg: #f7f7f5; --panel: #ffffff; --ink: #1d1f23; --muted: #626872; --line: #dfe1e5; --code: #f1f2f4;
+  --genuine: #1f7a4d; --genuine-bg: #e3f3ea; --lucky: #b3361f; --lucky-bg: #fbe6e1;
+  --defect: #8a5a00; --defect-bg: #fbf0d6; --accent: #2b5fb8; --mark: #ffe58a; --posthoc: #6b3fa0; --posthoc-bg: #f0e9f8;
+  --add: #dff3e4; --del: #fbe3e3;
+}
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    --bg: #15171a; --panel: #1d2024; --ink: #e6e7e9; --muted: #9aa0a8; --line: #30343a; --code: #24282d;
+    --genuine: #5fc58f; --genuine-bg: #17362a; --lucky: #f08a72; --lucky-bg: #3d1f19;
+    --defect: #e3b552; --defect-bg: #3a2e12; --accent: #7aa7f0; --mark: #6b5a12; --posthoc: #c3a2ee; --posthoc-bg: #2d2340;
+    --add: #183a24; --del: #3e1d1d; color-scheme: dark;
+  }
+}
+:root[data-theme="dark"] {
+  --bg: #15171a; --panel: #1d2024; --ink: #e6e7e9; --muted: #9aa0a8; --line: #30343a; --code: #24282d;
+  --genuine: #5fc58f; --genuine-bg: #17362a; --lucky: #f08a72; --lucky-bg: #3d1f19;
+  --defect: #e3b552; --defect-bg: #3a2e12; --accent: #7aa7f0; --mark: #6b5a12; --posthoc: #c3a2ee; --posthoc-bg: #2d2340;
+  --add: #183a24; --del: #3e1d1d; color-scheme: dark;
+}
+* { box-sizing: border-box; }
+body { margin: 0; background: var(--bg); color: var(--ink); font: 14px/1.5 -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; }
+header.top { position: sticky; top: 0; z-index: 5; background: var(--panel); border-bottom: 1px solid var(--line);
+  padding: 10px 16px; display: flex; gap: 16px; align-items: center; flex-wrap: wrap; }
+header.top b { font-size: 15px; }
+header.top nav a { margin-right: 12px; }
+main { max-width: 1280px; margin: 0 auto; padding: 16px; }
+a { color: var(--accent); text-decoration: none; }
+a:hover { text-decoration: underline; }
+h1 { font-size: 22px; margin: 4px 0 12px; }
+h2 { font-size: 17px; margin: 22px 0 8px; }
+h3 { font-size: 15px; margin: 14px 0 6px; }
+.muted { color: var(--muted); }
+.card { background: var(--panel); border: 1px solid var(--line); border-radius: 8px; padding: 12px 14px; margin: 10px 0; }
+.row { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+@media (max-width: 860px) { .row { grid-template-columns: 1fr; } }
+.scroll { overflow-x: auto; }
+table { border-collapse: collapse; width: 100%; }
+th, td { text-align: left; padding: 5px 8px; border-bottom: 1px solid var(--line); vertical-align: top; }
+th { font-weight: 600; color: var(--muted); font-size: 12px; }
+td.num, th.num { text-align: right; font-variant-numeric: tabular-nums; }
+.badge { display: inline-block; border-radius: 999px; padding: 1px 8px; font-size: 12px; font-weight: 600; margin-right: 4px; white-space: nowrap; }
+.genuine { color: var(--genuine); background: var(--genuine-bg); }
+.lucky { color: var(--lucky); background: var(--lucky-bg); }
+.spec_defect { color: var(--defect); background: var(--defect-bg); }
+.posthoc { color: var(--posthoc); background: var(--posthoc-bg); }
+.box-posthoc { border-color: var(--posthoc); }
+.grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(150px, 1fr)); gap: 8px; }
+.attempt-card { display: block; border-radius: 8px; padding: 8px 10px; border: 1px solid var(--line); background: var(--panel); color: var(--ink); }
+.attempt-card:hover { border-color: var(--accent); text-decoration: none; }
+.attempt-card.lucky, .attempt-card.genuine, .attempt-card.spec_defect { border-left-width: 5px; }
+.attempt-card.lucky { border-left-color: var(--lucky); }
+.attempt-card.genuine { border-left-color: var(--genuine); }
+.attempt-card.spec_defect { border-left-color: var(--defect); }
+pre, code { font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace; font-size: 12.5px; }
+pre { background: var(--code); border-radius: 6px; padding: 8px 10px; overflow-x: auto; margin: 6px 0; white-space: pre; }
+pre.wrap { white-space: pre-wrap; word-break: break-word; }
+code { background: var(--code); padding: 0 4px; border-radius: 4px; }
+mark { background: var(--mark); color: inherit; border-radius: 2px; }
+details > summary { cursor: pointer; color: var(--accent); margin: 4px 0; }
+.step { border-left: 3px solid var(--line); padding: 4px 0 4px 12px; margin: 10px 0; scroll-margin-top: 70px; }
+.step.flash { border-left-color: var(--accent); background: var(--code); }
+.step-head { font-weight: 600; }
+.call { margin: 6px 0 6px 4px; }
+.tool { display: inline-block; font-family: ui-monospace, Menlo, monospace; font-size: 12px; font-weight: 600; padding: 0 6px;
+  border-radius: 4px; background: var(--code); border: 1px solid var(--line); }
+.pass { color: var(--genuine); }
+.fail { color: var(--lucky); }
+.diff-add { background: var(--add); display: block; }
+.diff-del { background: var(--del); display: block; }
+.chip { display: inline-block; padding: 0 6px; margin: 0 3px 3px 0; border: 1px solid var(--line); border-radius: 4px; cursor: pointer;
+  background: var(--panel); color: var(--accent); font-size: 12px; }
+.score { font-size: 20px; font-weight: 700; font-variant-numeric: tabular-nums; }
+.dim { margin: 8px 0; }
+.violation { border-left: 3px solid var(--lucky); padding-left: 8px; margin: 8px 0; }
+.compare { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; }
+@media (max-width: 860px) { .compare { grid-template-columns: 1fr; } }
+#js-error { background: var(--lucky-bg); color: var(--lucky); padding: 8px 16px; }
+</style>
+</head>
+<body>
+<div id="js-error" hidden></div>
+<header class="top"><b>Lucky passes</b><nav><a href="#/">Overview</a><a href="#/compare">Compare</a></nav>
+<span class="muted">exp1 + exp2: 160 attempts, 16 tasks</span></header>
+<main id="app"></main>
+<script type="application/json" id="data">/*__DATA__*/</script>
+<script>
+"use strict";
+window.onerror = function (message) {
+  var box = document.getElementById("js-error");
+  box.hidden = false;
+  box.textContent = "Viewer error: " + message;
+};
+var DATA = JSON.parse(document.getElementById("data").textContent);
+var LABEL_TEXT = { genuine: "genuine", lucky: "lucky", spec_defect: "spec_defect" };
+var SCORERS = [["process", "Process judge"], ["final_code", "Final-code judge"], ["steps", "Steps (fewer flagged)"],
+  ["code_lines", "Code lines (fewer flagged)"]];
+var DIMS = ["plan_coherence", "error_recovery", "tool_precision"];
+var PROBE_LABELS = { glob_range_after_bracket: "range rule", glob_star: "performance", glob_star_many: "performance",
+  glob_unclosed_brackets: "performance" };
+
+function h(tag, attrs) {
+  var el = document.createElement(tag);
+  for (var k in (attrs || {})) {
+    if (k === "text") el.textContent = attrs[k];
+    else if (k === "cls") el.className = attrs[k];
+    else if (k === "on") for (var ev in attrs.on) el.addEventListener(ev, attrs.on[ev]);
+    else if (attrs[k] !== null && attrs[k] !== undefined) el.setAttribute(k, attrs[k]);
+  }
+  for (var i = 2; i < arguments.length; i++) add(el, arguments[i]);
+  return el;
+}
+function add(el, child) {
+  if (child === null || child === undefined || child === false) return;
+  if (Array.isArray(child)) { child.forEach(function (c) { add(el, c); }); return; }
+  el.appendChild(typeof child === "string" || typeof child === "number" ? document.createTextNode(String(child)) : child);
+}
+function num(v, d) { return v === null || v === undefined ? "n/a" : Number(v).toFixed(d === undefined ? 3 : d); }
+function fmt(v) { return v === null || v === undefined ? "n/a" : (Number.isInteger(v) ? String(v) : Number(v).toFixed(2)); }
+function badge(label) { return h("span", { cls: "badge " + label, text: LABEL_TEXT[label] || label }); }
+function posthocBadge() { return h("span", { cls: "badge posthoc", text: "post-hoc, not preregistered" }); }
+function link(href, text) { return h("a", { href: href, text: text }); }
+function attemptHref(key) { return "#/attempt/" + key; }
+function pre(text, cls) { return h("pre", { cls: cls || null, text: text === null || text === undefined ? "" : text }); }
+function fold(summary, body, open) { return h("details", open ? { open: "" } : {}, h("summary", { text: summary }), body); }
+function lines(text) { return text ? text.split("\n").length : 0; }
+
+function counts(task) {
+  var c = { genuine: 0, lucky: 0, spec_defect: 0 };
+  task.attempts.forEach(function (k) { c[DATA.attempts[k].label] = (c[DATA.attempts[k].label] || 0) + 1; });
+  return c;
+}
+
+// ---- overview ------------------------------------------------------------------------
+
+function aurocTable() {
+  var p = DATA.analysis.primary;
+  if (!p) return h("p", { cls: "muted", text: "No analysis results." });
+  var runs = ["combined"].concat(Object.keys(p).filter(function (k) { return k !== "combined"; }).sort());
+  var head = h("tr", {}, h("th", { text: "Scorer" }), runs.map(function (r) {
+    return h("th", { cls: "num", text: r + " AUROC [95% CI]" });
+  }));
+  var body = SCORERS.map(function (s) {
+    return h("tr", {}, h("td", { text: s[1] }), runs.map(function (r) {
+      var row = p[r].scorers[s[0]];
+      var ci = row.interval ? " [" + num(row.interval[0]) + ", " + num(row.interval[1]) + "]" : "";
+      return h("td", { cls: "num", text: num(row.auroc) + ci });
+    }));
+  });
+  var pools = h("tr", {}, h("td", { cls: "muted", text: "Pool (lucky / genuine)" }), runs.map(function (r) {
+    return h("td", { cls: "num muted", text: p[r].n_lucky + " / " + p[r].n_genuine });
+  }));
+  var v = DATA.analysis.verdict;
+  return h("div", {}, h("div", { cls: "scroll" }, h("table", {}, h("thead", {}, head), h("tbody", {}, body, pools))),
+    h("p", {}, h("b", { text: "Preregistered success criterion: " + (v.met ? "met" : "not met") + ". " }),
+      "The process judge's AUROC must exceed the final-code judge's, and its interval must exclude 0.5. " +
+      "Lower scores are flagged as more likely lucky; spec_defect attempts are excluded."));
+}
+
+function falseAlarmCounts() {
+  var groups = { genuine: [0, 0], lucky: [0, 0] };
+  Object.values(DATA.attempts).forEach(function (a) {
+    if (!groups[a.label] || a.final.status !== "ok") return;
+    groups[a.label][1] += 1;
+    if (a.final.violations.length) groups[a.label][0] += 1;
+  });
+  return h("p", {}, "Final-code judge lists at least one violation: genuine " + groups.genuine[0] + "/" + groups.genuine[1] +
+    ", lucky " + groups.lucky[0] + "/" + groups.lucky[1] + ".");
+}
+
+function probeLine(entry, filter) {
+  var probes = entry.probes.filter(filter);
+  return h("li", {}, link(attemptHref(entry.key), entry.task_id + " #" + entry.attempt), ": ",
+    probes.map(function (p, i) {
+      return h("span", {}, i ? "; " : "", h("b", { text: p.verdict }), " with ", h("code", { text: p.input }));
+    }));
+}
+
+function byTask(entries, filter) {
+  var tally = {};
+  entries.forEach(function (e) {
+    var labels = e.probes.filter(filter).map(function (p) { return PROBE_LABELS[p.probe]; }).filter(Boolean);
+    var name = e.task_id.replace(/_01$/, "") + (labels.length ? " " + labels[0] : "");
+    tally[name] = (tally[name] || 0) + 1;
+  });
+  return Object.keys(tally).sort(function (a, b) { return tally[b] - tally[a] || (a < b ? -1 : 1); })
+    .map(function (k) { return k + " " + tally[k]; }).join(", ");
+}
+
+function verificationBox() {
+  var g = DATA.verification;
+  var isReal = function (p) { return p.verdict === "real violation"; };
+  var all = function () { return true; };
+  return h("div", { cls: "card box-posthoc" }, h("h2", {}, "Final-code judge flags on genuine attempts, checked by running them ",
+    posthocBadge()),
+    h("p", { cls: "muted", text: "Each listed violation got one hand-written probe input, built from the judge's own " +
+      "description and run in the sandboxed test runner against the attempt's final code and the task's reference. " +
+      "Specified after the preregistered analysis had been read; descriptive only." }),
+    falseAlarmCounts(),
+    h("h3", { text: g.real.length + " real violations not covered by hidden tests (" + byTask(g.real, isReal) + ")" }),
+    h("ul", {}, g.real.map(function (e) { return probeLine(e, isReal); })),
+    h("h3", { text: g.spec_defect_zone.length + " in the human_size spec-defect zone (neither counted)" }),
+    h("ul", {}, g.spec_defect_zone.map(function (e) { return probeLine(e, all); })),
+    h("h3", { text: g.false_alarm.length + " false alarms (all " + byTask(g.false_alarm, all).replace(/ \d+$/, "") + " claims)" }),
+    h("ul", {}, g.false_alarm.map(function (e) { return probeLine(e, all); })),
+    g.lucky.length ? h("div", {}, h("h3", { text: "Lucky attempt checked the same way" }),
+      h("ul", {}, g.lucky.map(function (e) { return probeLine(e, all); }))) : null);
+}
+
+function overview() {
+  var tasks = Object.values(DATA.tasks).sort(function (a, b) {
+    return a.run < b.run ? -1 : a.run > b.run ? 1 : (a.task_id < b.task_id ? -1 : 1);
+  });
+  var rows = tasks.map(function (t) {
+    var c = counts(t);
+    return h("tr", {}, h("td", {}, link("#/task/" + t.task_id, t.task_id)), h("td", { text: t.run }),
+      h("td", {}, c.genuine ? h("span", { cls: "badge genuine", text: c.genuine + " genuine" }) : null,
+        c.lucky ? h("span", { cls: "badge lucky", text: c.lucky + " lucky" }) : null,
+        c.spec_defect ? h("span", { cls: "badge spec_defect", text: c.spec_defect + " spec_defect" }) : null),
+      h("td", { cls: "muted", text: t.boundary_example_in_docstring === null || t.boundary_example_in_docstring === undefined
+        ? "" : (t.boundary_example_in_docstring ? "yes" : "no") }));
+  });
+  return h("div", {}, h("h1", { text: "Detecting lucky passes" }),
+    h("p", { cls: "muted", text: "A lucky pass passes every visible test but fails a hidden one. Each attempt was scored " +
+      "by a process judge (the whole trajectory, including the final code) and a final-code judge (spec, visible tests " +
+      "and final code only). Neither judge saw hidden tests." }),
+    h("p", {}, "Featured: ", link("#/compare", "a cron_next lucky pass next to a text_justify genuine pass"), "."),
+    h("h2", { text: "Preregistered result" }), h("div", { cls: "card" }, aurocTable()),
+    h("h2", { text: "Tasks" }),
+    h("div", { cls: "card scroll" }, h("table", {}, h("thead", {}, h("tr", {}, h("th", { text: "Task" }),
+      h("th", { text: "Run" }), h("th", { text: "Attempts" }), h("th", { text: "Boundary example in docstring" }))),
+      h("tbody", {}, rows))),
+    verificationBox());
+}
+
+// ---- task -----------------------------------------------------------------------------
+
+function attemptCard(a) {
+  return h("a", { cls: "attempt-card " + a.label, href: attemptHref(a.key) },
+    h("div", {}, h("b", { text: "#" + a.attempt }), " ", badge(a.label)),
+    h("div", { cls: "muted", text: a.steps_count + " steps, " + a.code_lines + " lines" }),
+    h("div", { text: "process " + fmt(a.process.score) + ", final-code " + fmt(a.final.score) }));
+}
+
+function taskView(taskId) {
+  var t = DATA.tasks[taskId];
+  if (!t) return h("p", { text: "Unknown task " + taskId });
+  var c = counts(t);
+  return h("div", {}, h("p", {}, link("#/", "Overview")), h("h1", { text: t.task_id }),
+    h("p", {}, t.run, " · ", c.genuine + " genuine, " + c.lucky + " lucky, " + c.spec_defect + " spec_defect"),
+    h("div", { cls: "grid" }, t.attempts.map(function (k) { return attemptCard(DATA.attempts[k]); })),
+    h("h2", { text: "Specification (stub given to the agent)" }), pre(t.stub),
+    fold("Visible tests (test_visible.py)", pre(t.test_visible)));
+}
+
+// ---- attempt --------------------------------------------------------------------------
+
+function highlighted(text, quotes) {
+  var ranges = [];
+  quotes.forEach(function (q) {
+    var words = q.trim().split(/\s+/).filter(Boolean).map(function (w) { return w.replace(/[.*+?^${}()|[\]\\]/g, "\\$&"); });
+    if (!words.length) return;
+    var re = new RegExp(words.join("\\s+"), "g"), m;
+    while ((m = re.exec(text))) ranges.push([m.index, m.index + m[0].length]);
+  });
+  ranges.sort(function (a, b) { return a[0] - b[0]; });
+  var out = h("pre", { cls: "wrap" }), pos = 0;
+  ranges.forEach(function (r) {
+    if (r[0] < pos) r[0] = pos;
+    if (r[1] <= pos) return;
+    add(out, text.slice(pos, r[0]));
+    add(out, h("mark", { text: text.slice(r[0], r[1]) }));
+    pos = r[1];
+  });
+  add(out, text.slice(pos));
+  return out;
+}
+
+function diffBlock(diff) {
+  var out = h("pre");
+  diff.split("\n").forEach(function (line) {
+    var cls = line.startsWith("+") && !line.startsWith("+++") ? "diff-add" : line.startsWith("-") && !line.startsWith("---") ? "diff-del" : null;
+    add(out, cls ? h("span", { cls: cls, text: line }) : line + "\n");
+  });
+  return out;
+}
+
+function runClass(result) {
+  var m = /^(\d+) passed, (\d+) failed/.exec(result || "");
+  if (!m) return null;
+  return Number(m[2]) > 0 || /\(error:/.test(result.split("\n")[0]) ? "fail" : "pass";
+}
+
+function callView(call) {
+  var args = call.args || {};
+  var body = [];
+  if (call.name === "write_file" && typeof args.content === "string") {
+    body.push(h("div", {}, "path ", h("code", { text: args.path })));
+    if (call.diff !== undefined) {
+      body.push(fold("diff against the previous version", diffBlock(call.diff || "(no change)"), true));
+      body.push(fold("full content (" + lines(args.content) + " lines)", pre(args.content)));
+    } else {
+      body.push(fold("content (" + lines(args.content) + " lines)", pre(args.content)));
+    }
+  } else if (Object.keys(args).length) {
+    body.push(h("div", {}, h("code", { text: JSON.stringify(args) })));
+  }
+  var cls = runClass(call.result);
+  var result = call.result === null || call.result === undefined ? "(no result)" : call.result;
+  body.push(h("div", { cls: "muted", text: "result" }), pre(result, "wrap " + (cls || "")));
+  return h("div", { cls: "call" }, h("span", { cls: "tool", text: call.name }), body);
+}
+
+function stepView(s, prefix) {
+  return h("div", { cls: "step", id: prefix + "step-" + s.step },
+    h("div", { cls: "step-head" }, "Step " + s.step + " ",
+      h("span", { cls: "muted", text: "(" + s.tokens.input + " in, " + s.tokens.output + " out, " +
+        (s.tokens.reasoning === null ? "?" : s.tokens.reasoning) + " reasoning tokens)" })),
+    s.text ? h("p", { text: s.text }) : h("p", { cls: "muted", text: "(no agent text)" }),
+    s.calls.map(callView));
+}
+
+function scrollToStep(prefix, n) {
+  var el = document.getElementById(prefix + "step-" + n);
+  if (!el) return;
+  el.scrollIntoView({ behavior: "smooth", block: "start" });
+  el.classList.add("flash");
+  setTimeout(function () { el.classList.remove("flash"); }, 1500);
+}
+
+function processCard(p, prefix) {
+  if (p.status !== "ok") return h("div", { cls: "card" }, h("h3", { text: "Process judge" }), h("p", { text: p.status }));
+  return h("div", { cls: "card" }, h("h3", { text: "Process judge" }),
+    h("div", {}, h("span", { cls: "score", text: fmt(p.score) }), h("span", { cls: "muted", text: " / 5, mean of non-null dimensions" })),
+    DIMS.map(function (d) {
+      var x = p.dims[d];
+      return h("div", { cls: "dim" }, h("b", { text: d + ": " + (x.score === null ? "null" : x.score) }),
+        h("div", { text: x.rationale }),
+        x.cited_steps.length ? h("div", {}, h("span", { cls: "muted", text: "cited steps " }), x.cited_steps.map(function (n) {
+          return h("span", { cls: "chip", text: n, on: { click: function () { scrollToStep(prefix, n); } } });
+        })) : null);
+    }),
+    h("div", { cls: "muted", text: p.model + (p.had_tool_failure ? " · a tool reported a failure in this trajectory" : "") }));
+}
+
+function finalCard(a, task) {
+  var f = a.final;
+  if (f.status !== "ok") return h("div", { cls: "card" }, h("h3", { text: "Final-code judge" }), h("p", { text: f.status }));
+  var checks = a.verification || [];
+  return h("div", { cls: "card" }, h("h3", { text: "Final-code judge" }),
+    h("div", {}, h("span", { cls: "score", text: fmt(f.score) }), h("span", { cls: "muted", text: " / 5, spec_conformance" })),
+    h("p", { text: f.rationale }),
+    f.violations.length ? null : h("p", { cls: "muted", text: "No violations listed." }),
+    f.violations.map(function (v, i) {
+      var check = checks[i];
+      return h("div", { cls: "violation" },
+        h("div", {}, h("mark", { text: v.requirement_quote }), v.quote_valid ? null : h("span", { cls: "muted", text: " (quote not found in docstring)" })),
+        h("div", { text: v.what_the_code_does }),
+        check ? h("div", {}, posthocBadge(), h("b", { text: check.verdict }), check.probes.map(function (p) {
+          return h("div", {}, h("code", { text: p.input }), " → " + p.verdict + (p.spec_defect_zone ? " (spec-defect zone)" : ""));
+        })) : null);
+    }),
+    fold("Specification with quoted requirements highlighted",
+      highlighted(task.stub, f.violations.map(function (v) { return v.requirement_quote; }))),
+    h("div", { cls: "muted", text: f.model }));
+}
+
+function perturbedCard(a) {
+  var names = Object.keys(a.perturbed || {});
+  if (!names.length) return null;
+  var base = { "process/swap_model": a.process, "process/alt_format": a.process, "final_code/swap_model": a.final };
+  return h("div", { cls: "card" }, h("h3", { text: "Reliability subset: perturbed scores" }),
+    h("div", { cls: "scroll" }, h("table", {}, h("thead", {}, h("tr", {}, h("th", { text: "Condition" }), h("th", { cls: "num", text: "primary" }),
+      h("th", { cls: "num", text: "perturbed" }))), h("tbody", {}, names.map(function (n) {
+      return h("tr", {}, h("td", { text: n.replace("swap_model", "model swap (muse-spark-1.3)").replace("alt_format", "prose rendering") }),
+        h("td", { cls: "num", text: fmt(base[n].score) }), h("td", { cls: "num", text: fmt(a.perturbed[n].score) }));
+    })))));
+}
+
+function testsCard(a, task) {
+  var hid = a.hidden, vis = a.visible;
+  var cats = Object.keys(hid.by_category).map(function (c) { return c + " " + hid.by_category[c]; }).join(", ");
+  return h("div", { cls: "card" }, h("h3", { text: "Test outcomes (fresh runs on the final code)" }),
+    h("div", { cls: vis.failed || vis.error ? "fail" : "pass", text: "Visible: " + vis.passed + " passed, " + vis.failed + " failed" + (vis.error ? " (" + vis.error + ")" : "") }),
+    h("div", { cls: hid.failed || hid.error ? "fail" : "pass", text: "Hidden: " + hid.passed + " passed, " + hid.failed + " failed" + (hid.error ? " (" + hid.error + ")" : "") }),
+    hid.failed ? h("div", { cls: "muted", text: "Failures by category: " + cats }) : null,
+    hid.failing.map(function (name) {
+      return fold(name, pre(task.hidden_sources[name] || "(source not found)"));
+    }));
+}
+
+function timeline(a, prefix) {
+  return h("div", {}, fold("Instructions given to the agent", pre(DATA.system_prompts[a.system_prompt], "wrap")),
+    fold("First message", pre(a.first_message, "wrap")),
+    a.steps.map(function (s) { return stepView(s, prefix); }),
+    h("p", { cls: "muted", text: "Stopped: " + a.stop_reason }),
+    fold("Final module (" + a.code_lines + " lines)", pre(a.final_code)),
+    fold(a.final_test_mine === null ? "No test_mine.py written" : "Final test_mine.py", a.final_test_mine === null ? null : pre(a.final_test_mine)));
+}
+
+function attemptHeader(a) {
+  return h("div", {}, h("h1", {}, a.task_id + " #" + a.attempt + " ", badge(a.label)),
+    h("p", { cls: "muted", text: a.run + " · " + a.steps_count + " steps · " + a.code_lines + " lines of final code" +
+      (a.label !== a.original_label ? " · original label " + a.original_label : "") }));
+}
+
+function attemptView(key) {
+  var a = DATA.attempts[key];
+  if (!a) return h("p", { text: "Unknown attempt " + key });
+  var task = DATA.tasks[a.task_id];
+  return h("div", {}, h("p", {}, link("#/", "Overview"), " / ", link("#/task/" + a.task_id, a.task_id)),
+    attemptHeader(a), testsCard(a, task),
+    h("div", { cls: "row" }, processCard(a.process, ""), finalCard(a, task)),
+    perturbedCard(a),
+    h("h2", { text: "Timeline" }), timeline(a, ""));
+}
+
+// ---- compare --------------------------------------------------------------------------
+
+function compareColumn(key, prefix) {
+  var a = DATA.attempts[key], task = DATA.tasks[a.task_id];
+  return h("div", {}, h("h2", {}, link(attemptHref(key), a.task_id + " #" + a.attempt), " ", badge(a.label)),
+    testsCard(a, task), processCard(a.process, prefix), finalCard(a, task),
+    h("h3", { text: "Timeline" }), a.steps.map(function (s) { return stepView(s, prefix); }));
+}
+
+function compareView() {
+  var keys = DATA.compare;
+  return h("div", {}, h("p", {}, link("#/", "Overview")), h("h1", { text: "A lucky pass next to a genuine pass" }),
+    h("p", { cls: "muted", text: "Both attempts read the files, wrote the module, ran the visible tests and finished in 4 steps. " +
+      "Both pass every visible test; only the left one fails a hidden test. Pair chosen by trajectory shape, not by score." }),
+    h("div", { cls: "compare" }, compareColumn(keys[0], "a-"), compareColumn(keys[1], "b-")));
+}
+
+// ---- router ---------------------------------------------------------------------------
+
+function route() {
+  var parts = (location.hash || "#/").replace(/^#\/?/, "").split("/");
+  var app = document.getElementById("app");
+  app.textContent = "";
+  var view = parts[0] === "task" ? taskView(parts[1])
+    : parts[0] === "attempt" ? attemptView(parts.slice(1).join("/"))
+    : parts[0] === "compare" ? compareView() : overview();
+  app.appendChild(view);
+  window.scrollTo(0, 0);
+}
+window.addEventListener("hashchange", route);
+route();
+</script>
+</body>
+</html>

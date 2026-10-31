@@ -61,3 +61,5 @@ Chooses one attempt per task using the preregistered selection methods.
 ## Viewer
 
 Displays experiment attempts, scores, and results.
+
+- Oct 31, 2026: trajectory viewer (viewer/build.py, viewer/template.html): one self-contained HTML file with data embedded as JSON, no server and no network requests; overview with the preregistered AUROC table and a labelled post-hoc flag-verification box, task pages, attempt pages (timeline with diffs, test outcomes with failing hidden test source, both judges side by side), and a compare view (exp1 cron_next_01 #4 vs exp1 text_justify_01 #1). Built to results/viewer/index.html and copied to docs/index.html for GitHub Pages. posthoc_verify_flags.py now also writes JSON (rerun; verdicts unchanged, timings vary).

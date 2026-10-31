@@ -1,0 +1,920 @@
+[
+  {
+    "task_id": "glob_match_01",
+    "attempt": 2,
+    "source_run": "exp1",
+    "label": "genuine",
+    "time_limit": 5,
+    "violations": [
+      {
+        "quote": "Scale: text and pattern may each be several thousand characters long; recursion depth must not grow with their length, and each call must finish in about a second.",
+        "judge_says": "The last-star backtracking loop rescans all tokens after the star for each star position, giving quadratic behaviour on inputs such as thousands of 'a' characters matched against '*' followed by thousands of 'a's and a final 'b'.",
+        "probes": [
+          {
+            "probe": "glob_star",
+            "input": "glob_match('a' * 5000, '*' + 'a' * 4999 + 'b')",
+            "kind": "time",
+            "reference": {
+              "value": "False",
+              "seconds": 0.947
+            },
+            "attempt": {
+              "value": "False",
+              "seconds": 0.002
+            },
+            "verdict": "judge wrong",
+            "note": "",
+            "spec_defect_zone": false
+          }
+        ],
+        "verdict": "judge wrong"
+      },
+      {
+        "quote": "Scale: text and pattern may each be several thousand characters long; recursion depth must not grow with their length, and each call must finish in about a second.",
+        "judge_says": "For a pattern containing many '[' characters with no closing ']', _tokenize calls _parse_class at each '[' and each call scans to the end of the pattern, giving quadratic parsing time.",
+        "probes": [
+          {
+            "probe": "glob_unclosed_brackets",
+            "input": "glob_match('[' * 5000, '[' * 5000)",
+            "kind": "time",
+            "reference": {
+              "value": "True",
+              "seconds": 1.981
+            },
+            "attempt": {
+              "value": "True",
+              "seconds": 1.483
+            },
+            "verdict": "judge wrong",
+            "note": "",
+            "spec_defect_zone": false
+          }
+        ],
+        "verdict": "judge wrong"
+      }
+    ]
+  },
+  {
+    "task_id": "glob_match_01",
+    "attempt": 4,
+    "source_run": "exp1",
+    "label": "genuine",
+    "time_limit": 5,
+    "violations": [
+      {
+        "quote": "Scale: text and pattern may each be several thousand characters long; recursion depth must not grow with their length, and each call must finish in about a second.",
+        "judge_says": "Its star backtracking rescans the token suffix for each star position (e.g. '*' followed by thousands of 'a's and a final 'b' against thousands of 'a's), and unclosed '[' classes are reparsed from each '['; both are quadratic in Python and can exceed about a second.",
+        "probes": [
+          {
+            "probe": "glob_star",
+            "input": "glob_match('a' * 5000, '*' + 'a' * 4999 + 'b')",
+            "kind": "time",
+            "reference": {
+              "value": "False",
+              "seconds": 0.934
+            },
+            "attempt": {
+              "value": "False",
+              "seconds": 0.001
+            },
+            "verdict": "judge wrong",
+            "note": "",
+            "spec_defect_zone": false
+          },
+          {
+            "probe": "glob_unclosed_brackets",
+            "input": "glob_match('[' * 5000, '[' * 5000)",
+            "kind": "time",
+            "reference": {
+              "value": "True",
+              "seconds": 1.966
+            },
+            "attempt": {
+              "value": "True",
+              "seconds": 1.037
+            },
+            "verdict": "judge wrong",
+            "note": "",
+            "spec_defect_zone": false
+          }
+        ],
+        "verdict": "judge wrong"
+      }
+    ]
+  },
+  {
+    "task_id": "glob_match_01",
+    "attempt": 5,
+    "source_run": "exp1",
+    "label": "genuine",
+    "time_limit": 5,
+    "violations": [
+      {
+        "quote": "Scale: text and pattern may each be several thousand characters long; recursion depth must not grow with their length, and each call must finish in about a second.",
+        "judge_says": "For a pattern such as \"*\" followed by thousands of \"a\" characters and a final \"b\" against thousands of \"a\" characters, the code repeatedly rescans the long suffix after incrementing the star position, causing millions of Python-level loop iterations and likely exceeding about one second.",
+        "probes": [
+          {
+            "probe": "glob_star",
+            "input": "glob_match('a' * 5000, '*' + 'a' * 4999 + 'b')",
+            "kind": "time",
+            "reference": {
+              "value": "False",
+              "seconds": 0.94
+            },
+            "attempt": {
+              "value": "False",
+              "seconds": 0.001
+            },
+            "verdict": "judge wrong",
+            "note": "",
+            "spec_defect_zone": false
+          }
+        ],
+        "verdict": "judge wrong"
+      }
+    ]
+  },
+  {
+    "task_id": "glob_match_01",
+    "attempt": 6,
+    "source_run": "exp1",
+    "label": "genuine",
+    "time_limit": 5,
+    "violations": [
+      {
+        "quote": "Scale: text and pattern may each be several thousand characters long; recursion depth must not grow with their length, and each call must finish in about a second.",
+        "judge_says": "When a class is unterminated, parse_class scans to the end of the pattern and the main loop then retries parsing from the next '[', giving O(pattern^2) work for patterns containing many unterminated '[' characters.",
+        "probes": [
+          {
+            "probe": "glob_unclosed_brackets",
+            "input": "glob_match('[' * 5000, '[' * 5000)",
+            "kind": "time",
+            "reference": {
+              "value": "True",
+              "seconds": 1.98
+            },
+            "attempt": {
+              "value": "True",
+              "seconds": 1.157
+            },
+            "verdict": "judge wrong",
+            "note": "",
+            "spec_defect_zone": false
+          }
+        ],
+        "verdict": "judge wrong"
+      },
+      {
+        "quote": "Scale: text and pattern may each be several thousand characters long; recursion depth must not grow with their length, and each call must finish in about a second.",
+        "judge_says": "The last-star backtracking matcher rescans the token suffix after each star extension, giving O(len(text) * len(tokens)) worst-case work with a Python function call per character for adversarial patterns such as many '*a' items followed by a failing literal.",
+        "probes": [
+          {
+            "probe": "glob_star_many",
+            "input": "glob_match('a' * 5000, '*a' * 2500 + 'b')",
+            "kind": "time",
+            "reference": {
+              "value": "False",
+              "seconds": 0.77
+            },
+            "attempt": {
+              "value": "False",
+              "seconds": 0.001
+            },
+            "verdict": "judge wrong",
+            "note": "",
+            "spec_defect_zone": false
+          }
+        ],
+        "verdict": "judge wrong"
+      }
+    ]
+  },
+  {
+    "task_id": "glob_match_01",
+    "attempt": 8,
+    "source_run": "exp1",
+    "label": "genuine",
+    "time_limit": 5,
+    "violations": [
+      {
+        "quote": "Scale: text and pattern may each be several thousand characters long; recursion depth must not grow with their length, and each call must finish in about a second.",
+        "judge_says": "On a mismatch the iterative matcher backs up to the last '*' and rescans the following tokens for each advanced text position, giving O(len(text) * len(pattern)) Python-level steps (e.g. '*' + many 'a's + 'b' against many 'a's) that can exceed about a second.",
+        "probes": [
+          {
+            "probe": "glob_star",
+            "input": "glob_match('a' * 5000, '*' + 'a' * 4999 + 'b')",
+            "kind": "time",
+            "reference": {
+              "value": "False",
+              "seconds": 0.956
+            },
+            "attempt": {
+              "value": "False",
+              "seconds": 0.002
+            },
+            "verdict": "judge wrong",
+            "note": "",
+            "spec_defect_zone": false
+          }
+        ],
+        "verdict": "judge wrong"
+      },
+      {
+        "quote": "Scale: text and pattern may each be several thousand characters long; recursion depth must not grow with their length, and each call must finish in about a second.",
+        "judge_says": "An unterminated '[' is tentatively scanned to the end of the pattern and then reparsed starting one character later, so patterns containing many unterminated '[' characters cause O(len(pattern)^2) tokenization work.",
+        "probes": [
+          {
+            "probe": "glob_unclosed_brackets",
+            "input": "glob_match('[' * 5000, '[' * 5000)",
+            "kind": "time",
+            "reference": {
+              "value": "True",
+              "seconds": 1.989
+            },
+            "attempt": {
+              "value": "True",
+              "seconds": 1.93
+            },
+            "verdict": "judge wrong",
+            "note": "",
+            "spec_defect_zone": false
+          }
+        ],
+        "verdict": "judge wrong"
+      }
+    ]
+  },
+  {
+    "task_id": "glob_match_01",
+    "attempt": 10,
+    "source_run": "exp1",
+    "label": "genuine",
+    "time_limit": 5,
+    "violations": [
+      {
+        "quote": "After reading a member x, if the next character is \"-\" and the character after that exists and is not \"]\", then a second member y is read the same way and the pair is the range of all characters from x to y inclusive (by code point).",
+        "judge_says": "In _parse_class the very-first ']' member is appended as an isolated interval and bypasses the range check, so e.g. \"[]-a]\" is treated as members ']', '-', 'a' instead of the range ']'-'a', wrongly matching '-' and missing characters like '`'.",
+        "probes": [
+          {
+            "probe": "glob_range_after_bracket",
+            "input": "[glob_match(c, '[]-a]') for c in (']', '^', '`', 'a', '-', 'b')]",
+            "kind": "value",
+            "reference": {
+              "value": "[True, True, True, True, False, False]",
+              "seconds": 0.0
+            },
+            "attempt": {
+              "value": "[True, False, False, True, True, False]",
+              "seconds": 0.0
+            },
+            "verdict": "real violation",
+            "note": "",
+            "spec_defect_zone": false
+          }
+        ],
+        "verdict": "real violation"
+      },
+      {
+        "quote": "Scale: text and pattern may each be several thousand characters long; recursion depth must not grow with their length, and each call must finish in about a second.",
+        "judge_says": "The matcher backtracks by incrementing star_si and re-scanning all tokens after the last '*' each time, giving O(len(text) * len(tokens)) behaviour (e.g. text 'a'*3000 vs pattern '*' + 'a'*2999 + 'b') that can exceed about a second in Python for several-thousand-character inputs.",
+        "probes": [
+          {
+            "probe": "glob_star",
+            "input": "glob_match('a' * 5000, '*' + 'a' * 4999 + 'b')",
+            "kind": "time",
+            "reference": {
+              "value": "False",
+              "seconds": 0.955
+            },
+            "attempt": {
+              "value": "False",
+              "seconds": 0.001
+            },
+            "verdict": "judge wrong",
+            "note": "",
+            "spec_defect_zone": false
+          }
+        ],
+        "verdict": "judge wrong"
+      }
+    ]
+  },
+  {
+    "task_id": "human_size_01",
+    "attempt": 4,
+    "source_run": "exp2",
+    "label": "genuine",
+    "time_limit": 3,
+    "violations": [
+      {
+        "quote": "round the value to one decimal place (it is never exactly halfway)",
+        "judge_says": "The code rounds up only when 2 * r > u, so 1792 bytes (exactly 1.75 KiB) is formatted as \"1.7 KiB\" instead of rounding up to \"1.8 KiB\".",
+        "probes": [
+          {
+            "probe": "exact_half",
+            "input": "[human_size(1792), human_size(2304)]",
+            "kind": "value",
+            "reference": {
+              "value": "['1.8 KiB', '2.2 KiB']",
+              "seconds": 0.0
+            },
+            "attempt": {
+              "value": "['1.7 KiB', '2.2 KiB']",
+              "seconds": 0.0
+            },
+            "verdict": "real violation",
+            "note": "1792 B = 1.75 KiB and 2304 B = 2.25 KiB are exact ties, which the docstring says never occur (the human_size spec defect); the reference rounds half to even.",
+            "spec_defect_zone": true
+          }
+        ],
+        "verdict": "real violation"
+      }
+    ]
+  },
+  {
+    "task_id": "human_size_01",
+    "attempt": 7,
+    "source_run": "exp2",
+    "label": "genuine",
+    "time_limit": 3,
+    "violations": [
+      {
+        "quote": "divide n by u and round the value to one decimal place (it is never exactly halfway)",
+        "judge_says": "It uses `if 2 * r > u` so an exact half (e.g. 1792 bytes = 1.75 KiB, where 2*r == u) rounds down to \"1.7 KiB\" instead of up to \"1.8 KiB\".",
+        "probes": [
+          {
+            "probe": "exact_half",
+            "input": "[human_size(1792), human_size(2304)]",
+            "kind": "value",
+            "reference": {
+              "value": "['1.8 KiB', '2.2 KiB']",
+              "seconds": 0.0
+            },
+            "attempt": {
+              "value": "['1.7 KiB', '2.2 KiB']",
+              "seconds": 0.0
+            },
+            "verdict": "real violation",
+            "note": "1792 B = 1.75 KiB and 2304 B = 2.25 KiB are exact ties, which the docstring says never occur (the human_size spec defect); the reference rounds half to even.",
+            "spec_defect_zone": true
+          }
+        ],
+        "verdict": "real violation"
+      }
+    ]
+  },
+  {
+    "task_id": "nth_weekday_dates_01",
+    "attempt": 1,
+    "source_run": "exp1",
+    "label": "genuine",
+    "time_limit": 10,
+    "violations": [
+      {
+        "quote": "1. TypeError if start or end is not a date, or is a datetime.",
+        "judge_says": "Using `type(start) is not date` also rejects non-datetime subclasses of date, which are dates and are not datetimes.",
+        "probes": [
+          {
+            "probe": "date_subclass",
+            "input": "nth_weekday_dates(D(2026, 1, 1), D(2026, 3, 31), 0, 1)",
+            "kind": "value",
+            "reference": {
+              "value": "[datetime.date(2026, 1, 5), datetime.date(2026, 2, 2), datetime.date(2026, 3, 2)]",
+              "seconds": 0.0
+            },
+            "attempt": {
+              "value": "raises TypeError",
+              "seconds": 0.0
+            },
+            "verdict": "real violation",
+            "note": "",
+            "spec_defect_zone": false
+          }
+        ],
+        "verdict": "real violation"
+      },
+      {
+        "quote": "2. TypeError if weekday or n is not an int, or is a bool.",
+        "judge_says": "Using `type(weekday) is not int` also rejects non-bool subclasses of int, which are ints and are not bools.",
+        "probes": [
+          {
+            "probe": "int_subclass",
+            "input": "nth_weekday_dates(date(2026, 1, 1), date(2026, 3, 31), I(0), I(1))",
+            "kind": "value",
+            "reference": {
+              "value": "[datetime.date(2026, 1, 5), datetime.date(2026, 2, 2), datetime.date(2026, 3, 2)]",
+              "seconds": 0.0
+            },
+            "attempt": {
+              "value": "raises TypeError",
+              "seconds": 0.0
+            },
+            "verdict": "real violation",
+            "note": "",
+            "spec_defect_zone": false
+          }
+        ],
+        "verdict": "real violation"
+      }
+    ]
+  },
+  {
+    "task_id": "nth_weekday_dates_01",
+    "attempt": 4,
+    "source_run": "exp1",
+    "label": "genuine",
+    "time_limit": 10,
+    "violations": [
+      {
+        "quote": "TypeError if start or end is not a date, or is a datetime.",
+        "judge_says": "It uses `type(start) is not datetime.date`, rejecting non-datetime subclasses of date even though they are dates and only datetime is excluded.",
+        "probes": [
+          {
+            "probe": "date_subclass",
+            "input": "nth_weekday_dates(D(2026, 1, 1), D(2026, 3, 31), 0, 1)",
+            "kind": "value",
+            "reference": {
+              "value": "[datetime.date(2026, 1, 5), datetime.date(2026, 2, 2), datetime.date(2026, 3, 2)]",
+              "seconds": 0.0
+            },
+            "attempt": {
+              "value": "raises TypeError",
+              "seconds": 0.0
+            },
+            "verdict": "real violation",
+            "note": "",
+            "spec_defect_zone": false
+          }
+        ],
+        "verdict": "real violation"
+      },
+      {
+        "quote": "TypeError if weekday or n is not an int, or is a bool.",
+        "judge_says": "It uses `type(weekday) is not int or type(n) is not int`, rejecting non-bool int subclasses even though only bool is specifically excluded.",
+        "probes": [
+          {
+            "probe": "int_subclass",
+            "input": "nth_weekday_dates(date(2026, 1, 1), date(2026, 3, 31), I(0), I(1))",
+            "kind": "value",
+            "reference": {
+              "value": "[datetime.date(2026, 1, 5), datetime.date(2026, 2, 2), datetime.date(2026, 3, 2)]",
+              "seconds": 0.0
+            },
+            "attempt": {
+              "value": "raises TypeError",
+              "seconds": 0.0
+            },
+            "verdict": "real violation",
+            "note": "",
+            "spec_defect_zone": false
+          }
+        ],
+        "verdict": "real violation"
+      }
+    ]
+  },
+  {
+    "task_id": "nth_weekday_dates_01",
+    "attempt": 9,
+    "source_run": "exp1",
+    "label": "genuine",
+    "time_limit": 10,
+    "violations": [
+      {
+        "quote": "TypeError if start or end is not a date, or is a datetime.",
+        "judge_says": "It uses `type(start) is not date or type(end) is not date`, so a non-datetime subclass of `datetime.date` incorrectly raises TypeError instead of being accepted.",
+        "probes": [
+          {
+            "probe": "date_subclass",
+            "input": "nth_weekday_dates(D(2026, 1, 1), D(2026, 3, 31), 0, 1)",
+            "kind": "value",
+            "reference": {
+              "value": "[datetime.date(2026, 1, 5), datetime.date(2026, 2, 2), datetime.date(2026, 3, 2)]",
+              "seconds": 0.0
+            },
+            "attempt": {
+              "value": "raises TypeError",
+              "seconds": 0.0
+            },
+            "verdict": "real violation",
+            "note": "",
+            "spec_defect_zone": false
+          }
+        ],
+        "verdict": "real violation"
+      },
+      {
+        "quote": "TypeError if weekday or n is not an int, or is a bool.",
+        "judge_says": "It uses `type(weekday) is not int or type(n) is not int`, so a non-bool subclass of `int` incorrectly raises TypeError instead of being accepted.",
+        "probes": [
+          {
+            "probe": "int_subclass",
+            "input": "nth_weekday_dates(date(2026, 1, 1), date(2026, 3, 31), I(0), I(1))",
+            "kind": "value",
+            "reference": {
+              "value": "[datetime.date(2026, 1, 5), datetime.date(2026, 2, 2), datetime.date(2026, 3, 2)]",
+              "seconds": 0.0
+            },
+            "attempt": {
+              "value": "raises TypeError",
+              "seconds": 0.0
+            },
+            "verdict": "real violation",
+            "note": "",
+            "spec_defect_zone": false
+          }
+        ],
+        "verdict": "real violation"
+      }
+    ]
+  },
+  {
+    "task_id": "semver_match_01",
+    "attempt": 3,
+    "source_run": "exp1",
+    "label": "genuine",
+    "time_limit": 3,
+    "violations": [
+      {
+        "quote": "\"MAJOR.MINOR.PATCH\" or \"MAJOR.MINOR.PATCH-PRERELEASE\", with nothing else: no surrounding whitespace, no \"v\" prefix, no \"+build\" suffix.",
+        "judge_says": "Because the numeric and identifier regexes use `$` (which matches before a final newline) rather than a strict full match, versions such as \"1.0.0\\n\" or \"1.0.0-alpha\\n\" are accepted instead of raising ValueError.",
+        "probes": [
+          {
+            "probe": "trailing_newline",
+            "input": "[semver_match('1.0.0\\n', '>=1.0.0'), semver_match('1.0.0-alpha\\n', '>=0.1.0')]",
+            "kind": "value",
+            "reference": {
+              "value": "raises ValueError",
+              "seconds": 0.0
+            },
+            "attempt": {
+              "value": "[True, False]",
+              "seconds": 0.0
+            },
+            "verdict": "real violation",
+            "note": "",
+            "spec_defect_zone": false
+          }
+        ],
+        "verdict": "real violation"
+      }
+    ]
+  },
+  {
+    "task_id": "token_bucket_01",
+    "attempt": 1,
+    "source_run": "exp1",
+    "label": "genuine",
+    "time_limit": 10,
+    "violations": [
+      {
+        "quote": "capacity: the maximum number of tokens, an int or float, finite and > 0.",
+        "judge_says": "It calls math.isfinite on the raw int, which raises OverflowError for finite ints too large to convert to float such as 10**400 instead of accepting them (the same flaw affects rate, timestamps, and costs).",
+        "probes": [
+          {
+            "probe": "huge_int_capacity",
+            "input": "token_bucket(10 ** 400, 1, [(0, 1)])",
+            "kind": "value",
+            "reference": {
+              "value": "[True]",
+              "seconds": 0.0
+            },
+            "attempt": {
+              "value": "raises OverflowError",
+              "seconds": 0.0
+            },
+            "verdict": "real violation",
+            "note": "",
+            "spec_defect_zone": false
+          }
+        ],
+        "verdict": "real violation"
+      }
+    ]
+  },
+  {
+    "task_id": "token_bucket_01",
+    "attempt": 3,
+    "source_run": "exp1",
+    "label": "genuine",
+    "time_limit": 10,
+    "violations": [
+      {
+        "quote": "capacity: the maximum number of tokens, an int or float, finite and > 0.",
+        "judge_says": "It calls math.isfinite(capacity), which raises OverflowError for a finite int too large to convert to float (e.g. 10**400) instead of accepting it; the same math.isfinite flaw applies to large-int rate, timestamp, and cost values.",
+        "probes": [
+          {
+            "probe": "huge_int_capacity",
+            "input": "token_bucket(10 ** 400, 1, [(0, 1)])",
+            "kind": "value",
+            "reference": {
+              "value": "[True]",
+              "seconds": 0.0
+            },
+            "attempt": {
+              "value": "raises OverflowError",
+              "seconds": 0.0
+            },
+            "verdict": "real violation",
+            "note": "",
+            "spec_defect_zone": false
+          }
+        ],
+        "verdict": "real violation"
+      }
+    ]
+  },
+  {
+    "task_id": "token_bucket_01",
+    "attempt": 4,
+    "source_run": "exp1",
+    "label": "genuine",
+    "time_limit": 10,
+    "violations": [
+      {
+        "quote": "capacity: the maximum number of tokens, an int or float, finite and > 0.",
+        "judge_says": "It calls math.isfinite on the raw value, so a finite huge int such as 10**400 raises OverflowError instead of being accepted (the same flaw affects rate, timestamp, and cost).",
+        "probes": [
+          {
+            "probe": "huge_int_capacity",
+            "input": "token_bucket(10 ** 400, 1, [(0, 1)])",
+            "kind": "value",
+            "reference": {
+              "value": "[True]",
+              "seconds": 0.0
+            },
+            "attempt": {
+              "value": "raises OverflowError",
+              "seconds": 0.0
+            },
+            "verdict": "real violation",
+            "note": "",
+            "spec_defect_zone": false
+          }
+        ],
+        "verdict": "real violation"
+      }
+    ]
+  },
+  {
+    "task_id": "token_bucket_01",
+    "attempt": 5,
+    "source_run": "exp1",
+    "label": "genuine",
+    "time_limit": 10,
+    "violations": [
+      {
+        "quote": "capacity: the maximum number of tokens, an int or float, finite and > 0.",
+        "judge_says": "It calls math.isfinite() directly on ints, so a valid huge int such as 10**400 raises OverflowError during conversion to float instead of being accepted as finite, and the same issue affects large rate, timestamp, and cost values.",
+        "probes": [
+          {
+            "probe": "huge_int_capacity",
+            "input": "token_bucket(10 ** 400, 1, [(0, 1)])",
+            "kind": "value",
+            "reference": {
+              "value": "[True]",
+              "seconds": 0.0
+            },
+            "attempt": {
+              "value": "raises OverflowError",
+              "seconds": 0.0
+            },
+            "verdict": "real violation",
+            "note": "",
+            "spec_defect_zone": false
+          }
+        ],
+        "verdict": "real violation"
+      }
+    ]
+  },
+  {
+    "task_id": "token_bucket_01",
+    "attempt": 7,
+    "source_run": "exp1",
+    "label": "genuine",
+    "time_limit": 10,
+    "violations": [
+      {
+        "quote": "capacity: the maximum number of tokens, an int or float, finite and > 0.",
+        "judge_says": "It calls math.isfinite(capacity) (and similarly for rate, timestamps and costs), which raises OverflowError for a huge int such as 10**400 instead of accepting it as a finite positive int.",
+        "probes": [
+          {
+            "probe": "huge_int_capacity",
+            "input": "token_bucket(10 ** 400, 1, [(0, 1)])",
+            "kind": "value",
+            "reference": {
+              "value": "[True]",
+              "seconds": 0.0
+            },
+            "attempt": {
+              "value": "raises OverflowError",
+              "seconds": 0.0
+            },
+            "verdict": "real violation",
+            "note": "",
+            "spec_defect_zone": false
+          }
+        ],
+        "verdict": "real violation"
+      }
+    ]
+  },
+  {
+    "task_id": "token_bucket_01",
+    "attempt": 8,
+    "source_run": "exp1",
+    "label": "genuine",
+    "time_limit": 10,
+    "violations": [
+      {
+        "quote": "capacity: the maximum number of tokens, an int or float, finite and > 0.",
+        "judge_says": "It calls math.isfinite() on every numeric input, which raises OverflowError for valid huge ints such as 10**400 instead of treating them as finite and proceeding (the same flaw applies to rate, timestamp, and cost).",
+        "probes": [
+          {
+            "probe": "huge_int_capacity",
+            "input": "token_bucket(10 ** 400, 1, [(0, 1)])",
+            "kind": "value",
+            "reference": {
+              "value": "[True]",
+              "seconds": 0.0
+            },
+            "attempt": {
+              "value": "raises OverflowError",
+              "seconds": 0.0
+            },
+            "verdict": "real violation",
+            "note": "",
+            "spec_defect_zone": false
+          }
+        ],
+        "verdict": "real violation"
+      }
+    ]
+  },
+  {
+    "task_id": "token_bucket_01",
+    "attempt": 9,
+    "source_run": "exp1",
+    "label": "genuine",
+    "time_limit": 10,
+    "violations": [
+      {
+        "quote": "capacity: the maximum number of tokens, an int or float, finite and > 0.",
+        "judge_says": "It calls math.isfinite(capacity), which raises OverflowError for a valid int larger than about 1e308 instead of accepting it as finite.",
+        "probes": [
+          {
+            "probe": "huge_int_capacity",
+            "input": "token_bucket(10 ** 400, 1, [(0, 1)])",
+            "kind": "value",
+            "reference": {
+              "value": "[True]",
+              "seconds": 0.0
+            },
+            "attempt": {
+              "value": "raises OverflowError",
+              "seconds": 0.0
+            },
+            "verdict": "real violation",
+            "note": "",
+            "spec_defect_zone": false
+          }
+        ],
+        "verdict": "real violation"
+      },
+      {
+        "quote": "rate: tokens added per second, an int or float, finite and >= 0.",
+        "judge_says": "It calls math.isfinite(rate), which raises OverflowError for a valid int larger than about 1e308 instead of accepting it as finite.",
+        "probes": [
+          {
+            "probe": "huge_int_rate",
+            "input": "token_bucket(10, 10 ** 400, [(0, 1), (1, 10)])",
+            "kind": "value",
+            "reference": {
+              "value": "[True, True]",
+              "seconds": 0.0
+            },
+            "attempt": {
+              "value": "raises OverflowError",
+              "seconds": 0.0
+            },
+            "verdict": "real violation",
+            "note": "",
+            "spec_defect_zone": false
+          }
+        ],
+        "verdict": "real violation"
+      },
+      {
+        "quote": "timestamp (seconds) is an int or float, finite, and not less than the previous request's timestamp. cost is an int or float, finite and > 0.",
+        "judge_says": "It calls math.isfinite on timestamp and cost, so valid ints larger than about 1e308 raise OverflowError instead of being processed.",
+        "probes": [
+          {
+            "probe": "huge_int_timestamp_cost",
+            "input": "token_bucket(10 ** 401, 0, [(10 ** 400, 10 ** 400)])",
+            "kind": "value",
+            "reference": {
+              "value": "[True]",
+              "seconds": 0.0
+            },
+            "attempt": {
+              "value": "raises OverflowError",
+              "seconds": 0.0
+            },
+            "verdict": "real violation",
+            "note": "",
+            "spec_defect_zone": false
+          }
+        ],
+        "verdict": "real violation"
+      }
+    ]
+  },
+  {
+    "task_id": "token_bucket_01",
+    "attempt": 10,
+    "source_run": "exp1",
+    "label": "genuine",
+    "time_limit": 10,
+    "violations": [
+      {
+        "quote": "capacity: the maximum number of tokens, an int or float, finite and > 0.",
+        "judge_says": "It calls math.isfinite() directly on int inputs, so a huge finite int such as 10**400 raises OverflowError instead of being accepted (the same flaw applies to rate, timestamp, and cost).",
+        "probes": [
+          {
+            "probe": "huge_int_capacity",
+            "input": "token_bucket(10 ** 400, 1, [(0, 1)])",
+            "kind": "value",
+            "reference": {
+              "value": "[True]",
+              "seconds": 0.0
+            },
+            "attempt": {
+              "value": "raises OverflowError",
+              "seconds": 0.0
+            },
+            "verdict": "real violation",
+            "note": "",
+            "spec_defect_zone": false
+          }
+        ],
+        "verdict": "real violation"
+      }
+    ]
+  },
+  {
+    "task_id": "business_days_01",
+    "attempt": 9,
+    "source_run": "exp2",
+    "label": "lucky",
+    "time_limit": 3,
+    "violations": [
+      {
+        "quote": "For n > 0, step forward one day at a time from start and count each business day; the result is the n-th business day counted.",
+        "judge_says": "After skipping or processing a bulk week it continues with cur on a Monday but the loop head counts only days strictly after cur, so that Monday is never counted; e.g. from 2026-01-05 with a later holiday present, n=10 is returned as 2026-01-20 instead of 2026-01-19.",
+        "probes": [
+          {
+            "probe": "forward_after_bulk_week",
+            "input": "business_days(date(2026, 1, 5), 10, {date(2026, 3, 2)})",
+            "kind": "value",
+            "reference": {
+              "value": "datetime.date(2026, 1, 19)",
+              "seconds": 0.0
+            },
+            "attempt": {
+              "value": "datetime.date(2026, 1, 20)",
+              "seconds": 0.0
+            },
+            "verdict": "real violation",
+            "note": "",
+            "spec_defect_zone": false
+          }
+        ],
+        "verdict": "real violation"
+      },
+      {
+        "quote": "For n < 0, do the same backwards and return the |n|-th business day counted. start itself is never counted, and it need not be a business day.",
+        "judge_says": "Symmetrically, after moving cur to a Friday it re-enters the loop head which counts only days before cur, so that Friday is never counted; e.g. business_days(date(2026,1,16), -10, {date(2026,1,1)}) returns 2025-12-31 instead of 2026-01-02.",
+        "probes": [
+          {
+            "probe": "backward_after_bulk_week",
+            "input": "business_days(date(2026, 1, 16), -10, {date(2026, 1, 1)})",
+            "kind": "value",
+            "reference": {
+              "value": "datetime.date(2026, 1, 2)",
+              "seconds": 0.0
+            },
+            "attempt": {
+              "value": "datetime.date(2025, 12, 31)",
+              "seconds": 0.0
+            },
+            "verdict": "real violation",
+            "note": "",
+            "spec_defect_zone": false
+          }
+        ],
+        "verdict": "real violation"
+      }
+    ]
+  }
+]

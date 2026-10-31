@@ -40,48 +40,48 @@ Verdicts: *real violation* = the attempt's result differs from the reference (fo
 1. Quote: "Scale: text and pattern may each be several thousand characters long; recursion depth must not grow with their length, and each call must finish in about a second."
    Judge: The last-star backtracking loop rescans all tokens after the star for each star position, giving quadratic behaviour on inputs such as thousands of 'a' characters matched against '*' followed by thousands of 'a's and a final 'b'.
    **Verdict: judge wrong**
-   - `glob_star`: reference `False` in 0.931 s; attempt `False` in 0.002 s -> judge wrong
+   - `glob_star`: reference `False` in 0.947 s; attempt `False` in 0.002 s -> judge wrong
 2. Quote: "Scale: text and pattern may each be several thousand characters long; recursion depth must not grow with their length, and each call must finish in about a second."
    Judge: For a pattern containing many '[' characters with no closing ']', _tokenize calls _parse_class at each '[' and each call scans to the end of the pattern, giving quadratic parsing time.
    **Verdict: judge wrong**
-   - `glob_unclosed_brackets`: reference `True` in 1.946 s; attempt `True` in 1.476 s -> judge wrong
+   - `glob_unclosed_brackets`: reference `True` in 1.981 s; attempt `True` in 1.483 s -> judge wrong
 
 ### glob_match_01 #4 (genuine; time limit 5 s)
 
 1. Quote: "Scale: text and pattern may each be several thousand characters long; recursion depth must not grow with their length, and each call must finish in about a second."
    Judge: Its star backtracking rescans the token suffix for each star position (e.g. '*' followed by thousands of 'a's and a final 'b' against thousands of 'a's), and unclosed '[' classes are reparsed from each '['; both are quadratic in Python and can exceed about a second.
    **Verdict: judge wrong**
-   - `glob_star`: reference `False` in 0.947 s; attempt `False` in 0.002 s -> judge wrong
-   - `glob_unclosed_brackets`: reference `True` in 1.963 s; attempt `True` in 1.041 s -> judge wrong
+   - `glob_star`: reference `False` in 0.934 s; attempt `False` in 0.001 s -> judge wrong
+   - `glob_unclosed_brackets`: reference `True` in 1.966 s; attempt `True` in 1.037 s -> judge wrong
 
 ### glob_match_01 #5 (genuine; time limit 5 s)
 
 1. Quote: "Scale: text and pattern may each be several thousand characters long; recursion depth must not grow with their length, and each call must finish in about a second."
    Judge: For a pattern such as "*" followed by thousands of "a" characters and a final "b" against thousands of "a" characters, the code repeatedly rescans the long suffix after incrementing the star position, causing millions of Python-level loop iterations and likely exceeding about one second.
    **Verdict: judge wrong**
-   - `glob_star`: reference `False` in 0.952 s; attempt `False` in 0.001 s -> judge wrong
+   - `glob_star`: reference `False` in 0.94 s; attempt `False` in 0.001 s -> judge wrong
 
 ### glob_match_01 #6 (genuine; time limit 5 s)
 
 1. Quote: "Scale: text and pattern may each be several thousand characters long; recursion depth must not grow with their length, and each call must finish in about a second."
    Judge: When a class is unterminated, parse_class scans to the end of the pattern and the main loop then retries parsing from the next '[', giving O(pattern^2) work for patterns containing many unterminated '[' characters.
    **Verdict: judge wrong**
-   - `glob_unclosed_brackets`: reference `True` in 1.981 s; attempt `True` in 1.15 s -> judge wrong
+   - `glob_unclosed_brackets`: reference `True` in 1.98 s; attempt `True` in 1.157 s -> judge wrong
 2. Quote: "Scale: text and pattern may each be several thousand characters long; recursion depth must not grow with their length, and each call must finish in about a second."
    Judge: The last-star backtracking matcher rescans the token suffix after each star extension, giving O(len(text) * len(tokens)) worst-case work with a Python function call per character for adversarial patterns such as many '*a' items followed by a failing literal.
    **Verdict: judge wrong**
-   - `glob_star_many`: reference `False` in 0.764 s; attempt `False` in 0.002 s -> judge wrong
+   - `glob_star_many`: reference `False` in 0.77 s; attempt `False` in 0.001 s -> judge wrong
 
 ### glob_match_01 #8 (genuine; time limit 5 s)
 
 1. Quote: "Scale: text and pattern may each be several thousand characters long; recursion depth must not grow with their length, and each call must finish in about a second."
    Judge: On a mismatch the iterative matcher backs up to the last '*' and rescans the following tokens for each advanced text position, giving O(len(text) * len(pattern)) Python-level steps (e.g. '*' + many 'a's + 'b' against many 'a's) that can exceed about a second.
    **Verdict: judge wrong**
-   - `glob_star`: reference `False` in 0.954 s; attempt `False` in 0.002 s -> judge wrong
+   - `glob_star`: reference `False` in 0.956 s; attempt `False` in 0.002 s -> judge wrong
 2. Quote: "Scale: text and pattern may each be several thousand characters long; recursion depth must not grow with their length, and each call must finish in about a second."
    Judge: An unterminated '[' is tentatively scanned to the end of the pattern and then reparsed starting one character later, so patterns containing many unterminated '[' characters cause O(len(pattern)^2) tokenization work.
    **Verdict: judge wrong**
-   - `glob_unclosed_brackets`: reference `True` in 1.969 s; attempt `True` in 1.921 s -> judge wrong
+   - `glob_unclosed_brackets`: reference `True` in 1.989 s; attempt `True` in 1.93 s -> judge wrong
 
 ### glob_match_01 #10 (genuine; time limit 5 s)
 
@@ -92,7 +92,7 @@ Verdicts: *real violation* = the attempt's result differs from the reference (fo
 2. Quote: "Scale: text and pattern may each be several thousand characters long; recursion depth must not grow with their length, and each call must finish in about a second."
    Judge: The matcher backtracks by incrementing star_si and re-scanning all tokens after the last '*' each time, giving O(len(text) * len(tokens)) behaviour (e.g. text 'a'*3000 vs pattern '*' + 'a'*2999 + 'b') that can exceed about a second in Python for several-thousand-character inputs.
    **Verdict: judge wrong**
-   - `glob_star`: reference `False` in 0.939 s; attempt `False` in 0.001 s -> judge wrong
+   - `glob_star`: reference `False` in 0.955 s; attempt `False` in 0.001 s -> judge wrong
 
 ### human_size_01 #4 (genuine; time limit 3 s)
 

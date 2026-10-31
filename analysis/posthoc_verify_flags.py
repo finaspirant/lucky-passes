@@ -13,7 +13,8 @@ timeout). Verdicts:
                               while the reference does not)
   judge wrong                 same result as the reference (and within the time limit)
   could not construct an input  no probe written, or the probe did not run on the reference
-Writes results/analysis/posthoc_verify_flags.md.
+Writes results/analysis/posthoc_verify_flags.md and .json. A probe in the human_size spec-defect zone
+(exact ties, which the docstring says never occur) is marked spec_defect_zone.
 """
 
 import json
@@ -24,6 +25,7 @@ from analysis.analyze import JUDGE_DIR, RUNS, load_attempts, pool
 from tasks.gen.runner import run_tests
 
 OUT = Path("results/analysis/posthoc_verify_flags.md")
+OUT_JSON = OUT.with_suffix(".json")
 TASK_DIR = Path("tasks/generated_impl")
 IMPL_DIR = Path("tasks/_impl")
 RUN_TIMEOUT = 60
@@ -64,6 +66,7 @@ ASSIGNMENT = {
     ("human_size_01", 4): [["exact_half"]], ("human_size_01", 7): [["exact_half"]],
     ("business_days_01", 9): [["forward_after_bulk_week"], ["backward_after_bulk_week"]],
 }
+SPEC_DEFECT_ZONE = {"exact_half"}
 NOTES = {"exact_half": "1792 B = 1.75 KiB and 2304 B = 2.25 KiB are exact ties, which the docstring says never "
                        "occur (the human_size spec defect); the reference rounds half to even."}
 
@@ -132,13 +135,14 @@ def check(item, scratch):
             ref, att = probe(module, reference, name, scratch), probe(module, final_code, name, scratch)
             results.append({"probe": name, "input": PROBES[name][1], "kind": PROBES[name][2], "reference": ref,
                             "attempt": att, "verdict": verdict(PROBES[name][2], ref, att, limit),
-                            "note": NOTES.get(name, "")})
+                            "note": NOTES.get(name, ""), "spec_defect_zone": name in SPEC_DEFECT_ZONE})
         verdicts = {r["verdict"] for r in results}
         overall = ("real violation" if "real violation" in verdicts else "judge wrong" if "judge wrong" in verdicts
                    else "could not construct an input")
         rows.append({"quote": violation["requirement_quote"], "judge_says": violation["what_the_code_does"],
                      "probes": results, "verdict": overall})
-    return {"task_id": item["task_id"], "attempt": item["attempt"], "label": item["label"], "time_limit": limit,
+    return {"task_id": item["task_id"], "attempt": item["attempt"], "source_run": item["source_run"],
+            "label": item["label"], "time_limit": limit,
             "violations": rows}
 
 
@@ -194,4 +198,5 @@ if __name__ == "__main__":
     with tempfile.TemporaryDirectory(prefix="lp_probe_") as scratch:
         checks = [check(i, scratch) for i in items]
     OUT.write_text(markdown(checks))
+    OUT_JSON.write_text(json.dumps(checks, indent=2) + "\n")
     print(OUT.read_text())
