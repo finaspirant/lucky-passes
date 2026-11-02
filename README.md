@@ -2,7 +2,7 @@
 
 **Question:** When a coding agent's attempt passes every visible test but fails hidden ones (a *lucky pass*), can an LLM judge catch it, and does reading the agent's process help?
 
-**Preregistered answer:** process didn't help. A judge reading only the final code against the spec separated lucky passes far better (AUROC 0.93 vs 0.51; the difference is clear but both estimates have wide intervals; [results/analysis/analysis.json](results/analysis/analysis.json)). But lucky passes came from just 2 of 16 tasks, so treat this as directional.
+**Preregistered answer:** process didn't help. A judge reading only the final code against the spec separated lucky passes far better (AUROC 0.93 vs 0.51; the difference's 95% interval excludes zero, but only just, and both estimates have wide intervals; [results/analysis/analysis.json](results/analysis/analysis.json)). But lucky passes came from just 2 of 16 tasks, so treat this as directional.
 
 **The striking case:** one task (cron_next) failed the same stated requirement in 10 of 10 attempts, so best-of-10 selection couldn't help. The code judge named that exact requirement every time.
 
