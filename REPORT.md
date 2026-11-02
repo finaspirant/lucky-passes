@@ -143,11 +143,15 @@ The only task where any choice mattered is business_days_01. Both judges' top at
 
 Everything in this section is **post-hoc, not preregistered**.
 
-**Naming the failure.** The hand-check record [results/analysis/human_check.md](results/analysis/human_check.md) has no rows filled in yet. Every statement below about a judge "naming" a failure is therefore **per the judge text, not yet human-checked**.
+**Naming the failure.** Every row of the hand-check record [results/analysis/human_check.md](results/analysis/human_check.md) is filled in. The rows were pre-filled by stated rules from the judge outputs, and the author reviewed and approved each one. business_days #9 was also checked by running the judge's own example.
 
-- **cron_next, all 10 attempts.** The final-code judge gave spec_conformance 4 and listed exactly one violation, quoting the year-9999/ValueError sentence above. Its description says the code raises OverflowError instead (`results/judges/final_code/primary.jsonl`; also printed under "Qualitative check" in `results/analysis/report.md`).
-- **The process judge on cron_next.** Its text mentions the search limit only in lists of behaviour the agent did not check, never as a defect in the code (e.g. #1: "…search-limit overflow despite being instructed to do so"; `results/judges/process/primary.jsonl`).
-- **business_days #9.** The final-code judge gave 2 and listed two violations, quoting the forward and backward counting rules ("start itself is never counted, and it need not be a business day"). Two hidden edge tests check exactly that, `test_edge_logic_start_on_saturday` and `test_edge_logic_start_on_sunday_backwards`, along with 20 random tests (`results/runs/exp2/outcomes.jsonl`).
+- **cron_next, all 10 attempts: final-code judge named the failure in 10 of 10, checked by the author (results/analysis/human_check.md).** It gave spec_conformance 4 and listed exactly one violation, quoting the year-9999/ValueError sentence above. Its description says the code raises OverflowError instead (`results/judges/final_code/primary.jsonl`; also printed under "Qualitative check" in `results/analysis/report.md`).
+- **The process judge on cron_next: partially in 5 of 10 (#1, #2, #4, #8, #9) and not in 5 (#3, #5, #6, #7, #10), checked by the author (results/analysis/human_check.md).** Its text mentions the search limit only in lists of behaviour the agent did not check, never as a defect in the code (e.g. #1: "…search-limit overflow despite being instructed to do so"; `results/judges/process/primary.jsonl`).
+- **business_days #9: both judges named the failure, checked by the author (results/analysis/human_check.md).**
+  - The final-code judge gave 2 and listed two violations, quoting the forward and backward counting rules ("start itself is never counted, and it need not be a business day"). Two hidden edge tests check exactly that, `test_edge_logic_start_on_saturday` and `test_edge_logic_start_on_sunday_backwards`, along with 20 random tests (`results/runs/exp2/outcomes.jsonl`).
+  - The judge's example `business_days(date(2026,1,16), -10, {date(2026,1,1)})` returns 2025-12-31 from the attempt and 2026-01-02 from the reference.
+  - The process judge cited the abandoned fix (steps 11–15).
+- **human_size spec_defect attempts (#2, #3, #5, #6): not applicable, because the spec itself was wrong (results/analysis/human_check.md).** Neither judge flagged the exact-tie rounding.
 
 **False alarms on genuine passes.** Source: `results/analysis/posthoc_false_alarms.md`.
 
@@ -241,8 +245,6 @@ Source: `results/analysis/analysis.json` → `reliability`. For error_recovery, 
 - **The human_size spec defect.** The docstring says a value is never exactly halfway, but `test_edge_logic_gib` is an exact tie (Data notes in PREREGISTRATION.md). The 4 attempts that fail only that test are excluded from the primary pool and counted as lucky in the sensitivity analysis. The 2 genuine human_size attempts flagged for exact-half rounding fall in the same zone (§5).
 - **The stated-boundary tasks were designed after exp1** (Amendment 3), to produce more lucky passes. They produced one lucky pass (business_days #9), and it failed for a different reason. Each exp2 task has a block of designed boundary cases, marked "Boundary requirement" in `tasks/_impl/<task>/cases.py`: business_days 9, split_money 6, human_size 5, flatten 5, normalize_tags 6, merge_ranges 5, for 36 hidden tests in all. None of the 60 exp2 attempts fails any of them (`hidden_failing` in `results/runs/exp2/outcomes.jsonl`). The exp2 hidden failures are all outside these blocks: business_days #9's counting tests and random tests, and human_size's `test_edge_logic_gib` spec defect.
 - **The hidden tests are an imperfect ground truth.** 13 genuine passes contain real spec violations that the hidden tests miss (§5, post-hoc).
-- **Human check pending.** `results/analysis/human_check.md` is still blank.
-
 ## 9. What I'd do next
 
 - **More tasks with mixed outcomes.** Get a pool where many tasks have both lucky and genuine attempts, using several agents, settings or prompts, so that within-task AUROC carries the result instead of differences between tasks.
