@@ -10,6 +10,8 @@
 
 **Live viewer:** https://finaspirant.github.io/lucky-passes/ (every attempt, both judges side by side, hidden-test failures). Side-by-side comparison of a lucky and a genuine pass: https://finaspirant.github.io/lucky-passes/#/compare
 
+**Demo video (3 min):** https://youtu.be/kCBHWg1bPgI
+
 Built for the Meta Global AI Developer Hackathon, Oct 26 to Nov 4, 2026.
 
 ## Built with
